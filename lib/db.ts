@@ -7,9 +7,15 @@ import {
 import "dotenv/config";
 import { drizzle } from "drizzle-orm/libsql";
 import { Document } from "@langchain/core/documents";
-import { embeddings, splitDocument, vectorStore } from "@/app/api/utils";
+import {
+	chatModel,
+	embeddings,
+	splitDocument,
+	vectorStore,
+} from "@/app/api/utils";
 import { sql } from "drizzle-orm/sql";
 import { createClient } from "@libsql/client";
+import { writeFileSync } from "node:fs";
 
 if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
 	throw new Error("Missing environment variables");
@@ -20,12 +26,12 @@ export const dbClient = createClient({
 	authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-const db = drizzle(dbClient);
+export const db = drizzle(dbClient);
 
 async function main() {
-	await db.run(sql`
-		CREATE INDEX IF NOT EXISTS vector_index ON documents_chunk (vector) USING vector_cosine(1536);
-	`);
+	// await db.run(sql`
+	// 	CREATE INDEX IF NOT EXISTS vector_index ON documents_chunk (vector) USING vector_cosine(1536);
+	// `);
 
 	// Create a new user.
 	// const user = await db
@@ -37,7 +43,7 @@ async function main() {
 	// 	})
 	// 	.returning();
 
-	// // Create new users document table.
+	// Create new users document table.
 	// const usersDocumentTable = await db
 	// 	.insert(userDocumentsTable)
 	// 	.values({
@@ -47,21 +53,47 @@ async function main() {
 	// 	})
 	// 	.returning();
 
-	// // Take embeddings of a document.
+	// Take embeddings of a document.
 	// const response = await embeddings.embedDocuments([
-	// 	"My name is Sanjeev Bhusal",
+	// 	"I am currently working as a Sofware Engineer",
 	// ]);
 	// const vector = response[0];
+	// const response = await embeddings.embedQuery("What is my job?");
 
-	// // Create new documents chunk table.
+	// writeFileSync("./vector.txt", JSON.stringify(response), "utf-8");
+
+	// Create new documents chunk table.
 	// await db.insert(documentsChunkTable).values([
 	// 	{
-	// 		userDocumentId: usersDocumentTable[0].id,
-	// 		content: "My name is Sanjeev Bhusal",
+	// 		userDocumentId: 1,
+	// 		content: "I am currently working as a Sofware Engineer",
 	// 		metadata: "",
 	// 		vector: sql`vector32(${JSON.stringify(vector)})`,
 	// 	},
 	// ]);
+
+	const question = "What is my and my father's name? ";
+	const questionEmbeddings = await embeddings.embedQuery(question);
+	const topK = await db
+		.select({
+			id: sql`documents_chunk.id`,
+			content: sql`content`,
+		})
+		.from(
+			sql`vector_top_k('vector_index', vector32(${JSON.stringify(questionEmbeddings)}), 3)`,
+		)
+		.leftJoin(
+			documentsChunkTable,
+			sql`${documentsChunkTable}.id = vector_top_k.id`,
+		);
+
+	const sources = topK.map((doc) => doc.content).join("\n");
+	const userMessage = {
+		role: "user",
+		content: `${question}\n Sources: ${sources}`,
+	};
+	const response = await chatModel.invoke([userMessage]);
+	console.log(response.content);
 }
 
 main();

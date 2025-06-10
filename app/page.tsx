@@ -6,76 +6,57 @@ import { Textarea } from "@/components/ui/textarea";
 import { UploadButton } from "@/lib/uploadThing";
 import { useEffect, useState } from "react";
 
-const initialMessages = [
-	{
-		id: 1,
-		message: "Hello, how are you?",
-		role: "user",
-		sources: [],
-	},
-	{
-		id: 2,
-		message: "I'm good, thanks! How about you?",
-		role: "ai",
-		sources: [],
-	},
-	{
-		id: 3,
-		message: "Tell me about your company's SOC 2 policy?",
-		role: "user",
-		sources: [],
-	},
-	{
-		id: 4,
-		message:
-			"Sure. Acme Corp did its SOC 2 Report in 12th October, 2024. It was done by a reputed third party. Will you like to know more?",
-		role: "ai",
-		sources: [],
-	},
-	{
-		id: 5,
-		message: "Yes. I want to know more about the SOC 2 report.",
-		role: "user",
-		sources: [],
-	},
-	{
-		id: 6,
-		message:
-			"Sure. Acme Corp's SOC 2 report has a rating of 5/5 provided by xyz company. The company follows all SOC 2 principles such as Security, Availability, Confidentiality, Privacy and Processing integrity.",
-		role: "ai",
-		sources: [],
-	},
-];
+interface Message {
+	id: number;
+	content: string;
+	role: "user" | "assistant";
+	// sources: [];
+}
 
 export default function Home() {
-	const [messages, setMessages] = useState(initialMessages);
+	const [messages, setMessages] = useState<Message[]>([]);
 
 	useEffect(() => {
 		const lastMessage = messages[messages.length - 1];
-		document
-			.getElementById(lastMessage.id.toString())
-			?.scrollIntoView({ behavior: "instant" });
+		if (lastMessage) {
+			document
+				.getElementById(lastMessage.id.toString())
+				?.scrollIntoView({ behavior: "instant" });
+		}
 	}, [messages]);
 
 	const getAnswer = async (question: string) => {
-		const response = await fetch(`/api/answer?question=${question}`);
+		const response = await fetch("/api/answer", {
+			method: "POST",
+			body: JSON.stringify({ question }),
+			headers: {
+				"Content-Type": "application/json",
+			},
+		});
 		const data = await response.json();
 		setMessages((messages) => [
 			...messages,
 			{
 				id: messages.length + 1,
-				message: data.answer,
-				role: "ai",
-				sources: [],
+				content: data.result,
+				role: "assistant",
+				// sources: [],
 			},
 		]);
 	};
 
-	const createEmbeddings = async () => {
-		await fetch("/api/documents", {
-			method: "POST",
-		});
-	};
+	useEffect(() => {
+		const getMessages = async () => {
+			const response = await fetch("/api/answer");
+			const data = await response.json();
+			console.log({ data });
+			setMessages(data.result);
+		};
+
+		getMessages();
+	}, []);
+
+	console.log({ messages });
 
 	return (
 		<div className="h-screen py-0">
@@ -100,9 +81,9 @@ export default function Home() {
 						<Message
 							key={message.id}
 							messageId={message.id.toString()}
-							message={message.message}
+							message={message.content}
 							role={message.role}
-							sources={message.sources}
+							sources={[]}
 							isLastMessage={id === messages.length - 1}
 						/>
 					))}
@@ -117,9 +98,9 @@ export default function Home() {
 								...messages,
 								{
 									id: messages.length + 1,
-									message: e.currentTarget.value,
+									content: e.currentTarget.value,
 									role: "user",
-									sources: [],
+									// sources: [],
 								},
 							]);
 							getAnswer(e.currentTarget.value);
@@ -141,7 +122,7 @@ const Message = ({
 }: {
 	messageId: string;
 	message: string;
-	role: "user" | "ai";
+	role: "user" | "assistant";
 	sources: { id: string; name: string }[];
 	isLastMessage: boolean;
 }) => {
@@ -151,7 +132,7 @@ const Message = ({
 				<div className="text-2xl font-bold mr-4">{message}</div>
 			)}
 
-			{role === "ai" && (
+			{role === "assistant" && (
 				<div>
 					<div className="font-bold mt-4">Sources</div>
 					<p className="mt-2">No Sources Found</p>

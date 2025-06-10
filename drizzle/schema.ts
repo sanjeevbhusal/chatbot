@@ -2,18 +2,18 @@ import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 import { customType } from "drizzle-orm/sqlite-core";
 
-export const userDocuments = sqliteTable("user_documents", {
-	id: integer().primaryKey({ autoIncrement: true }).notNull(),
-	userId: integer().references(() => users.id),
-	name: text(),
-	url: text(),
-});
-
-export const users = sqliteTable("users", {
+export const usersTable = sqliteTable("users", {
 	id: integer().primaryKey({ autoIncrement: true }).notNull(),
 	name: text(),
 	email: text(),
 	password: text(),
+});
+
+export const userDocumentsTable = sqliteTable("user_documents", {
+	id: integer().primaryKey({ autoIncrement: true }).notNull(),
+	userId: integer().references(() => usersTable.id),
+	name: text(),
+	url: text(),
 });
 
 const float32Array = customType<{
@@ -33,11 +33,20 @@ const float32Array = customType<{
 	},
 });
 
-export const documentsChunk = sqliteTable("documents_chunk", {
+export const documentsChunkTable = sqliteTable("documents_chunk", {
 	id: integer().primaryKey({ autoIncrement: true }),
-	userDocumentId: integer().references(() => userDocuments.id),
+	userDocumentId: integer().references(() => userDocumentsTable.id),
 	metadata: text(),
+	content: text(),
 	vector: float32Array("vector", { dimensions: 1536 }),
 	// Note: vector column has an index defined. This is a special vector index. Drizzle doesnot support representing the index correctly in the schema. Hence, new users will need to create the index manually by writing sql themselves.
 	// INDEX: CREATE INDEX IF NOT EXISTS vector_index ON documents_chunk(libsql_vector_idx(vector));
+});
+
+export const usersMessagesTable = sqliteTable("users_messages", {
+	id: integer().primaryKey({ autoIncrement: true }),
+	userId: integer().references(() => usersTable.id),
+	role: text().notNull(),
+	content: text().notNull(),
+	createdAt: text().notNull(),
 });

@@ -1,0 +1,1 @@
+ALTER TABLE `documents_chunk` ADD `content` text;
