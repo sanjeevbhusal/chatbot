@@ -25,7 +25,7 @@ export const usersTable = sqliteTable("user", {
 
 export const userDocumentsTable = sqliteTable("user_documents", {
 	id: integer().primaryKey({ autoIncrement: true }).notNull(),
-	userId: integer().references(() => usersTable.id),
+	userId: text().references(() => usersTable.id),
 	name: text(),
 	url: text(),
 });
@@ -59,7 +59,7 @@ export const documentsChunkTable = sqliteTable("documents_chunk", {
 
 export const usersMessagesTable = sqliteTable("users_messages", {
 	id: integer().primaryKey({ autoIncrement: true }),
-	userId: integer().references(() => usersTable.id),
+	userId: text().references(() => usersTable.id),
 	role: text().notNull(),
 	content: text().notNull(),
 	createdAt: text().notNull(),

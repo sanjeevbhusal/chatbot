@@ -16,6 +16,8 @@ import { authClient } from "@/lib/auth-client";
 import type { Document } from "@/lib/types";
 import { UploadButton } from "@/lib/uploadThing";
 import { CircleHelp, Plus } from "lucide-react";
+import { CldImage } from "next-cloudinary";
+import { CldUploadButton } from "next-cloudinary";
 import { useRouter } from "next/navigation";
 
 interface SidebarProps {
@@ -29,6 +31,18 @@ export default function Sidebar({
 }: SidebarProps) {
 	const router = useRouter();
 	const { data: session } = authClient.useSession();
+
+	const uploadDocument = async (publicUrl: string, fileName: string) => {
+		const response = await fetch("/api/document", {
+			method: "POST",
+			body: JSON.stringify({ publicUrl, fileName }),
+			headers: {
+				"Content-Type": "application/json",
+			},
+		});
+		const data = await response.json();
+		// setDocuments((documents) => [...documents, data.result]);
+	};
 
 	return (
 		<div>
@@ -72,28 +86,22 @@ export default function Sidebar({
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
-
 			<Separator />
 
-			<UploadButton
-				endpoint="documentsUploader"
-				onClientUploadComplete={(res) => {
-					// Do something with the response
-					alert("Upload Completed");
-				}}
-				onUploadError={(error: Error) => {
-					// Do something with the error.
-					alert(`ERROR! ${error.message}`);
-				}}
-				content={{
-					button: (
-						<p className="flex items-center gap-2">
-							<Plus /> Add Document
-						</p>
-					),
-				}}
-				className="p-4 w-full ut-allowed-content:hidden ut-button:w-full"
-			/>
+			<div className="p-4">
+				<Button asChild className="w-full">
+					<CldUploadButton
+						onSuccess={(r) => {
+							console.log(r);
+							const info = r.info as Record<string, string>;
+							const publicUrl = info.secure_url;
+							const fileName = info.original_filename;
+							uploadDocument(publicUrl, fileName);
+						}}
+						signatureEndpoint="/api/document/upload-signature"
+					/>
+				</Button>
+			</div>
 
 			{documents.length === 0 ? (
 				<p className="p-4 text-slate-600">No Documents Uploaded</p>
@@ -113,21 +121,6 @@ export default function Sidebar({
 					))}
 				</div>
 			)}
-
-			<div className="flex flex-col gap-2 p-4">
-				{documents.map((document) => (
-					<div className="flex gap-4 items-center" key={document.id}>
-						<p className="font-semibold">{document.name}</p>
-						<Button
-							variant="link"
-							className="text-blue-500 p-0 h-fit"
-							onClick={() => setActiveDocument(document)}
-						>
-							View
-						</Button>
-					</div>
-				))}
-			</div>
 		</div>
 	);
 }

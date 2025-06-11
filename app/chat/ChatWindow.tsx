@@ -83,7 +83,7 @@ export default function ChatWindow({
 									<div className="font-bold mt-4">Answer</div>
 									<p className="mt-2">{message.content}</p>
 
-									{index === messages.length - 1 && (
+									{index !== messages.length - 1 && (
 										<Separator orientation="horizontal" className="h-2 my-8" />
 									)}
 								</div>

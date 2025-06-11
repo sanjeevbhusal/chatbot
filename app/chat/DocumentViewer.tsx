@@ -5,6 +5,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import "@cyntler/react-doc-viewer/dist/index.css";
 import { Separator } from "@/components/ui/separator";
 import type { Document } from "@/lib/types";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";

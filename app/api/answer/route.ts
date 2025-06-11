@@ -7,6 +7,8 @@ import {
 	messageSourcesTable,
 	usersMessagesTable,
 } from "@/drizzle/schema";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 const systemMessage = {
 	role: "system",
@@ -76,6 +78,16 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: NextRequest) {
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
+
+	const userId = session?.user.id;
+
+	if (!userId) {
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
+	}
+
 	const body = await request.json();
 	const question = body.question as string;
 
@@ -101,7 +113,7 @@ export async function POST(request: NextRequest) {
 
 	// add this user asked message to database.
 	await db.insert(usersMessagesTable).values({
-		userId: 1,
+		userId: userId,
 		content: question,
 		role: "user",
 		createdAt: new Date().toISOString(),
@@ -126,7 +138,7 @@ export async function POST(request: NextRequest) {
 	const message = await db
 		.insert(usersMessagesTable)
 		.values({
-			userId: 1,
+			userId: userId,
 			role: "assistant",
 			content: response.content,
 			createdAt: new Date().toISOString(),

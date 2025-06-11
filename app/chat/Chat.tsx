@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import "@cyntler/react-doc-viewer/dist/index.css";
 import type { Document, Message } from "@/lib/types";
+import { useEffect, useState } from "react";
 import ChatWindow from "./ChatWindow";
 import DocumentViewer from "./DocumentViewer";
 import Sidebar from "./Sidebar";
