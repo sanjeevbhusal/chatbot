@@ -1,16 +1,16 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import SignIn from "./SignIn";
+import Chat from "./Chat";
 
 export default async function Page() {
 	const session = await auth.api.getSession({
 		headers: await headers(),
 	});
 
-	if (session) {
-		redirect("/chat");
+	if (!session) {
+		redirect("/sign-in");
 	}
 
-	return <SignIn />;
+	return <Chat />;
 }
