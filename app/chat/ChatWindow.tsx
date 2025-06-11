@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { useGetDocumentsQuery } from "@/lib/queries";
 import type { Document, Message } from "@/lib/types";
 import clsx from "clsx";
 import { Loader2 } from "lucide-react";
@@ -8,7 +9,6 @@ import { useEffect } from "react";
 
 interface ChatWindowProps {
 	messages: Message[];
-	documents: Document[];
 	onSelectDocument: (
 		document: Document,
 		fromLineNo: number,
@@ -20,11 +20,13 @@ interface ChatWindowProps {
 
 export default function ChatWindow({
 	messages,
-	documents,
 	getAnswer,
 	onSelectDocument,
 	hasInitialMessagesLoaded,
 }: ChatWindowProps) {
+	const documentsQuery = useGetDocumentsQuery();
+	const documents = documentsQuery.data ?? [];
+
 	useEffect(() => {
 		const lastMessage = messages[messages.length - 1];
 		if (lastMessage) {
@@ -118,7 +120,7 @@ export default function ChatWindow({
 
 			<Textarea
 				placeholder={
-					documents.length === 0
+					documentsQuery.status === "success" && documents.length === 0
 						? "Please add at least 1 source before asking questions"
 						: "Type your message here..."
 				}

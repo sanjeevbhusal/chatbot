@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import "@cyntler/react-doc-viewer/dist/index.css";
 import { Separator } from "@/components/ui/separator";
+import { useGetDocumentsQuery } from "@/lib/queries";
 import type { Document } from "@/lib/types";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import clsx from "clsx";
@@ -14,7 +15,6 @@ import { useEffect } from "react";
 
 interface DocumentViewerProps {
 	activeDocument?: Document;
-	documents: Document[];
 	onClose: () => void;
 	onSelectDocument: (document: Document) => void;
 	activeDocumentFromLineNo?: number;
@@ -23,12 +23,14 @@ interface DocumentViewerProps {
 
 export default function DocumentViewer({
 	activeDocument,
-	documents,
 	onClose,
 	onSelectDocument,
 	activeDocumentFromLineNo,
 	activeDocumentToLineNo,
 }: DocumentViewerProps) {
+	const documentsQuery = useGetDocumentsQuery();
+	const documents = documentsQuery.data ?? [];
+
 	useEffect(() => {
 		if (!activeDocument || !activeDocumentFromLineNo || !activeDocumentToLineNo)
 			return;
@@ -54,7 +56,10 @@ export default function DocumentViewer({
 			setTimeout(() => {
 				const highlightedElement =
 					container.getElementsByClassName("highlighted")[0];
-				highlightedElement?.scrollIntoView({ behavior: "smooth" });
+				highlightedElement?.scrollIntoView({
+					behavior: "smooth",
+					block: "center",
+				});
 			}, 100);
 
 			clearInterval(interval);

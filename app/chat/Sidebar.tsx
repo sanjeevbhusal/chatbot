@@ -23,36 +23,70 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
+import { useGetDocumentsQuery } from "@/lib/queries";
 import type { Document } from "@/lib/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CircleHelp, EllipsisVertical, Eye, Plus, Trash2 } from "lucide-react";
 import { CldUploadButton } from "next-cloudinary";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface SidebarProps {
-	documents: Document[];
 	setActiveDocument: (document?: Document) => void;
 }
 
-export default function Sidebar({
-	documents,
-	setActiveDocument,
-}: SidebarProps) {
+export default function Sidebar({ setActiveDocument }: SidebarProps) {
 	const [selectedDocumentForDeletion, setSelectedDocumentForDeletion] =
 		useState<Document | undefined>(undefined);
+
 	const router = useRouter();
+	const queryClient = useQueryClient();
 	const { data: session } = authClient.useSession();
 
-	const uploadDocument = async (publicUrl: string, fileName: string) => {
-		const response = await fetch("/api/document", {
-			method: "POST",
-			body: JSON.stringify({ publicUrl, fileName }),
-			headers: {
-				"Content-Type": "application/json",
-			},
-		});
-		const data = await response.json();
-	};
+	const documentsQuery = useGetDocumentsQuery();
+	const documents = documentsQuery.data ?? [];
+
+	const deleteDocumentMutation = useMutation({
+		mutationFn: async (documentId: number) => {
+			const response = await fetch("/api/document", {
+				method: "DELETE",
+				body: JSON.stringify({ documentId }),
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			const data = await response.json();
+			return data.result;
+		},
+		onSuccess: () => {
+			setSelectedDocumentForDeletion(undefined);
+			queryClient.invalidateQueries({
+				queryKey: ["documents"],
+			});
+		},
+	});
+
+	const uploadDocumentMutation = useMutation({
+		mutationFn: async ({
+			publicUrl,
+			fileName,
+		}: { publicUrl: string; fileName: string }) => {
+			const response = await fetch("/api/document", {
+				method: "POST",
+				body: JSON.stringify({ publicUrl, fileName }),
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			const data = await response.json();
+			return data.result;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["documents"],
+			});
+		},
+	});
 
 	return (
 		<div>
@@ -102,11 +136,10 @@ export default function Sidebar({
 				<Button asChild className="w-full">
 					<CldUploadButton
 						onSuccess={(r) => {
-							console.log(r);
 							const info = r.info as Record<string, string>;
 							const publicUrl = info.secure_url;
 							const fileName = info.original_filename;
-							uploadDocument(publicUrl, fileName);
+							uploadDocumentMutation.mutate({ publicUrl, fileName });
 						}}
 						signatureEndpoint="/api/document/upload-signature"
 					>
@@ -145,7 +178,7 @@ export default function Sidebar({
 											variant="destructive"
 											onClick={(e) => {
 												e.stopPropagation();
-												setSelectedDocumentForDeletion(document);
+												deleteDocumentMutation.mutate(document.id);
 											}}
 										>
 											<Trash2 />

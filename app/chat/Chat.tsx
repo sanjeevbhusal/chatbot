@@ -1,20 +1,44 @@
 "use client";
 
 import type { Document, Message } from "@/lib/types";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import ChatWindow from "./ChatWindow";
 import DocumentViewer from "./DocumentViewer";
 import Sidebar from "./Sidebar";
 
 export default function Chat() {
 	const [messages, setMessages] = useState<Message[]>([]);
-	const [documents, setDocuments] = useState<Document[]>([]);
 	const [activeDocument, setActiveDocument] = useState<Document>();
 	const [activeDocumentFromLineNo, setActiveDocumentFromLineNo] =
 		useState<number>();
 	const [activeDocumentToLineNo, setActiveDocumentToLineNo] =
 		useState<number>();
+
+	const getAnswerMutation = useMutation({
+		mutationFn: async (question: string) => {
+			const response = await fetch("/api/answer", {
+				method: "POST",
+				body: JSON.stringify({ question }),
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			const data = await response.json();
+			return data.result as Message;
+		},
+		onSuccess: (data) => {
+			setMessages((messages) => [
+				...messages,
+				{
+					id: data.id,
+					content: data.content,
+					role: data.role,
+					sources: data.sources,
+				},
+			]);
+		},
+	});
 
 	const getAnswer = async (question: string) => {
 		setMessages((messages) => [
@@ -27,25 +51,7 @@ export default function Chat() {
 			},
 		]);
 
-		const response = await fetch("/api/answer", {
-			method: "POST",
-			body: JSON.stringify({ question }),
-			headers: {
-				"Content-Type": "application/json",
-			},
-		});
-
-		const data = await response.json();
-
-		setMessages((messages) => [
-			...messages,
-			{
-				id: data.result.id,
-				content: data.result.content,
-				role: data.result.role,
-				sources: data.result.sources,
-			},
-		]);
+		getAnswerMutation.mutate(question);
 	};
 
 	const initialMessagesQuery = useQuery({
@@ -59,27 +65,16 @@ export default function Chat() {
 		},
 	});
 
-	useEffect(() => {
-		const getDocuments = async () => {
-			const response = await fetch("/api/document");
-			const data = await response.json();
-			setDocuments(data.result);
-		};
-
-		getDocuments();
-	}, []);
-
 	return (
 		<div className="h-screen py-0 w-full flex">
 			<div className="w-[20%] h-full relative">
-				<Sidebar documents={documents} setActiveDocument={setActiveDocument} />
+				<Sidebar setActiveDocument={setActiveDocument} />
 			</div>
 
 			<div className="w-[80%] h-full p-4  border border-t-0 relative flex flex-col gap-12">
 				<ChatWindow
 					hasInitialMessagesLoaded={initialMessagesQuery.status === "success"}
 					messages={messages}
-					documents={documents}
 					onSelectDocument={(
 						document: Document,
 						fromLineNo: number,
@@ -95,7 +90,6 @@ export default function Chat() {
 
 			<DocumentViewer
 				activeDocument={activeDocument}
-				documents={documents}
 				onClose={() => {
 					setActiveDocument(undefined);
 					setActiveDocumentFromLineNo(undefined);
