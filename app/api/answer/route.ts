@@ -111,6 +111,11 @@ export async function POST(request: NextRequest) {
 			sql`${documentsChunkTable}.id = vector_top_k.id`,
 		);
 
+	// If there are no documents, throw an error.
+	if (documentsChunk.length === 0) {
+		return Response.json({ error: "No sources found" }, { status: 400 });
+	}
+
 	const sources = documentsChunk.map((chunk) => chunk.content).join("\n");
 
 	// add this user asked message to database.

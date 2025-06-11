@@ -6,6 +6,7 @@ import cloudinary from "cloudinary";
 import { embeddings, splitDocument } from "../utils";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { eq } from "drizzle-orm";
 
 cloudinary.v2.config({
 	cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -71,4 +72,25 @@ export async function POST(request: Request) {
 
 	// !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
 	return Response.json({ uploadedBy: 1 });
+}
+
+export async function DELETE(request: Request) {
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
+
+	const userId = session?.user.id;
+
+	if (!userId) {
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
+	}
+
+	const body = await request.json();
+	const documentId = body.documentId;
+
+	await db
+		.delete(userDocumentsTable)
+		.where(eq(userDocumentsTable.id, documentId));
+
+	return Response.json({ result: "ok" });
 }

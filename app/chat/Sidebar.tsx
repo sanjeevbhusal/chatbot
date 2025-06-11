@@ -1,3 +1,13 @@
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,9 +24,10 @@ import {
 } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
 import type { Document } from "@/lib/types";
-import { CircleHelp } from "lucide-react";
+import { CircleHelp, EllipsisVertical, Eye, Plus, Trash2 } from "lucide-react";
 import { CldUploadButton } from "next-cloudinary";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface SidebarProps {
 	documents: Document[];
@@ -27,6 +38,8 @@ export default function Sidebar({
 	documents,
 	setActiveDocument,
 }: SidebarProps) {
+	const [selectedDocumentForDeletion, setSelectedDocumentForDeletion] =
+		useState<Document | undefined>(undefined);
 	const router = useRouter();
 	const { data: session } = authClient.useSession();
 
@@ -96,28 +109,88 @@ export default function Sidebar({
 							uploadDocument(publicUrl, fileName);
 						}}
 						signatureEndpoint="/api/document/upload-signature"
-					/>
+					>
+						<Plus /> Upload
+					</CldUploadButton>
 				</Button>
 			</div>
 
 			{documents.length === 0 ? (
-				<p className="p-4 text-slate-600">No Documents Uploaded</p>
+				<p className="p-4 text-slate-600">No Sources Uploaded</p>
 			) : (
 				<div className="flex flex-col gap-2 p-4">
 					{documents.map((document) => (
 						<div className="flex gap-4 items-center" key={document.id}>
-							<p className="font-semibold">{document.name}</p>
 							<Button
-								variant="link"
-								className="text-blue-500 p-0 h-fit"
+								variant="outline"
+								className="text-blue-500 w-full justify-between"
 								onClick={() => setActiveDocument(document)}
 							>
-								View
+								<p className="font-semibold">{document.name}</p>
+								<DropdownMenu>
+									<DropdownMenuTrigger className="cursor-pointer">
+										<EllipsisVertical />
+									</DropdownMenuTrigger>
+									<DropdownMenuContent>
+										<DropdownMenuItem
+											onClick={(e) => {
+												e.stopPropagation();
+												setActiveDocument(document);
+											}}
+										>
+											<Eye />
+											View
+										</DropdownMenuItem>
+										<DropdownMenuItem
+											variant="destructive"
+											onClick={(e) => {
+												e.stopPropagation();
+												setSelectedDocumentForDeletion(document);
+											}}
+										>
+											<Trash2 />
+											Delete
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
 							</Button>
 						</div>
 					))}
 				</div>
 			)}
+
+			<AlertDialog
+				open={!!selectedDocumentForDeletion}
+				onOpenChange={() => setSelectedDocumentForDeletion(undefined)}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							Delete {selectedDocumentForDeletion?.name}
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							Are you absolutely sure? This action cannot be undone
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={async (e) => {
+								e.stopPropagation();
+								await fetch("/api/document", {
+									method: "DELETE",
+									body: JSON.stringify({
+										documentId: selectedDocumentForDeletion?.id,
+									}),
+								});
+								setSelectedDocumentForDeletion(undefined);
+							}}
+						>
+							Delete
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }

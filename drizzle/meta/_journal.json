@@ -15,6 +15,13 @@
       "when": 1749637439373,
       "tag": "0001_opposite_mongoose",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1749642459223,
+      "tag": "0002_orange_union_jack",
+      "breakpoints": true
     }
   ]
 }

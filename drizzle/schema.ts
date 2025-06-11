@@ -49,7 +49,9 @@ const float32Array = customType<{
 
 export const documentsChunkTable = sqliteTable("documents_chunk", {
 	id: integer().primaryKey({ autoIncrement: true }),
-	userDocumentId: integer().references(() => userDocumentsTable.id),
+	userDocumentId: integer().references(() => userDocumentsTable.id, {
+		onDelete: "cascade",
+	}),
 	metadata: text(),
 	content: text(),
 	vector: float32Array("vector", { dimensions: 1536 }),
@@ -73,7 +75,9 @@ export const messageSourcesTable = sqliteTable(
 			.references(() => usersMessagesTable.id),
 		documentChunkId: integer()
 			.notNull()
-			.references(() => documentsChunkTable.id),
+			.references(() => documentsChunkTable.id, {
+				onDelete: "cascade",
+			}),
 	},
 	(t) => [primaryKey({ columns: [t.messageId, t.documentChunkId] })],
 );

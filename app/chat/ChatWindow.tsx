@@ -94,14 +94,19 @@ export default function ChatWindow({
 			</div>
 
 			<Textarea
-				placeholder="Type your message here..."
-				className="min-h-[14%] border rounded-lg p-2"
+				placeholder={
+					documents.length === 0
+						? "Please add at least 1 source before asking questions"
+						: "Type your message here..."
+				}
+				className="min-h-[14%] border rounded-lg p-2 disabled:text-black disabled:opacity-100 disabled:text-lg"
 				onKeyUp={(e) => {
 					if (e.key === "Enter") {
 						getAnswer(e.currentTarget.value);
 						e.currentTarget.value = "";
 					}
 				}}
+				disabled={documents.length === 0}
 			/>
 		</>
 	);
