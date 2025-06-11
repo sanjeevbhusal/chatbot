@@ -14,9 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
 import type { Document } from "@/lib/types";
-import { UploadButton } from "@/lib/uploadThing";
-import { CircleHelp, Plus } from "lucide-react";
-import { CldImage } from "next-cloudinary";
+import { CircleHelp } from "lucide-react";
 import { CldUploadButton } from "next-cloudinary";
 import { useRouter } from "next/navigation";
 
@@ -41,7 +39,6 @@ export default function Sidebar({
 			},
 		});
 		const data = await response.json();
-		// setDocuments((documents) => [...documents, data.result]);
 	};
 
 	return (

@@ -98,8 +98,10 @@ export async function POST(request: NextRequest) {
 	const questionEmbeddings = await embeddings.embedQuery(question);
 	const documentsChunk = await db
 		.select({
-			id: sql`documents_chunk.id`,
-			content: sql`content`,
+			id: sql<number>`documents_chunk.id`,
+			content: sql<string>`content`,
+			metadata: sql<string>`metadata`,
+			userDocumentId: sql<number>`userDocumentId`,
 		})
 		.from(
 			sql`vector_top_k('vector_index', vector32(${JSON.stringify(questionEmbeddings)}), 3)`,
@@ -135,7 +137,7 @@ export async function POST(request: NextRequest) {
 	const response = await chatModel.invoke(messages);
 
 	// add response and sources to messages table
-	const message = await db
+	const query = await db
 		.insert(usersMessagesTable)
 		.values({
 			userId: userId,
@@ -145,13 +147,31 @@ export async function POST(request: NextRequest) {
 		})
 		.returning();
 
+	const message = query[0];
+
 	// add sources to database.
 	await db.insert(messageSourcesTable).values(
 		documentsChunk.map((chunk) => ({
-			messageId: message[0].id,
+			messageId: message.id,
 			documentChunkId: chunk.id as number,
 		})),
 	);
 
-	return Response.json({ result: response.content });
+	const result = {
+		id: message.id,
+		content: message.content,
+		role: message.role,
+		createdAt: message.createdAt,
+		sources: documentsChunk.map((chunk) => {
+			const metadata = JSON.parse(chunk.metadata ?? "{}");
+			return {
+				name: metadata.name,
+				linesFrom: metadata.loc?.lines?.from,
+				linesTo: metadata.loc?.lines?.to,
+				userDocumentId: chunk.userDocumentId,
+			};
+		}),
+	};
+
+	return Response.json({ result });
 }

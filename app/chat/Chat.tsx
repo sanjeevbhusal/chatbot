@@ -38,10 +38,10 @@ export default function Chat() {
 		setMessages((messages) => [
 			...messages,
 			{
-				id: messages.length + 1,
-				content: data.result,
-				role: "assistant",
-				sources: [],
+				id: data.result.id,
+				content: data.result.content,
+				role: data.result.role,
+				sources: data.result.sources,
 			},
 		]);
 	};
