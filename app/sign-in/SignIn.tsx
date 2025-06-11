@@ -12,7 +12,9 @@ export default function SignIn() {
 	};
 	return (
 		<div className="h-screen w-screen flex items-center justify-center">
-			<Button onClick={signin}>Sign In with Google</Button>
+			<Button onClick={signin} className="cursor-pointer">
+				Sign In with Google
+			</Button>
 		</div>
 	);
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import type { Document, Message } from "@/lib/types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import ChatWindow from "./ChatWindow";
 import DocumentViewer from "./DocumentViewer";
@@ -16,7 +17,7 @@ export default function Chat() {
 		useState<number>();
 
 	const getAnswer = async (question: string) => {
-		setMessages([
+		setMessages((messages) => [
 			...messages,
 			{
 				id: messages.length + 1,
@@ -35,6 +36,7 @@ export default function Chat() {
 		});
 
 		const data = await response.json();
+
 		setMessages((messages) => [
 			...messages,
 			{
@@ -46,15 +48,16 @@ export default function Chat() {
 		]);
 	};
 
-	useEffect(() => {
-		const getMessages = async () => {
+	const initialMessagesQuery = useQuery({
+		queryKey: ["messages"],
+		queryFn: async () => {
 			const response = await fetch("/api/answer");
 			const data = await response.json();
-			setMessages(data.result);
-		};
-
-		getMessages();
-	}, []);
+			const messages = data.result as Message[];
+			setMessages(messages);
+			return messages;
+		},
+	});
 
 	useEffect(() => {
 		const getDocuments = async () => {
@@ -74,6 +77,7 @@ export default function Chat() {
 
 			<div className="w-[80%] h-full p-4  border border-t-0 relative flex flex-col gap-12">
 				<ChatWindow
+					hasInitialMessagesLoaded={initialMessagesQuery.status === "success"}
 					messages={messages}
 					documents={documents}
 					onSelectDocument={(
