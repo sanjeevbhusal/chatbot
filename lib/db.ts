@@ -1,21 +1,9 @@
-import { ourFileRouter } from "@/app/api/uploadthing/core";
-import {
-	documentsChunkTable,
-	userDocumentsTable,
-	usersTable,
-} from "@/drizzle/schema";
+import { documentsChunkTable } from "@/drizzle/schema";
 import "dotenv/config";
 import { drizzle } from "drizzle-orm/libsql";
-import { Document } from "@langchain/core/documents";
-import {
-	chatModel,
-	embeddings,
-	splitDocument,
-	vectorStore,
-} from "@/app/api/utils";
+import { chatModel, embeddings } from "@/app/api/utils";
 import { sql } from "drizzle-orm/sql";
 import { createClient } from "@libsql/client";
-import { writeFileSync } from "node:fs";
 
 if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
 	throw new Error("Missing environment variables");
@@ -93,7 +81,6 @@ async function main() {
 		content: `${question}\n Sources: ${sources}`,
 	};
 	const response = await chatModel.invoke([userMessage]);
-	console.log(response.content);
 }
 
 main();

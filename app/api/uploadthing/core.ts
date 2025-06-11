@@ -28,7 +28,6 @@ export const ourFileRouter = {
 			// const user = await auth(req);
 
 			// const formData = await req.formData();
-			// console.log({ formData });
 
 			// If you throw, the user will not be able to upload
 			// if (!user) throw new UploadThingError("Unauthorized");
@@ -47,11 +46,7 @@ export const ourFileRouter = {
 
 			// await splitDocument(file.)
 
-			console.log("Upload complete for userId:", metadata.userId);
-
 			// dbClient.execute("INSERT INTO documents (url) VALUES (?)", [file.ufsUrl]);
-
-			console.log("file url", file.ufsUrl);
 
 			const response = await axios.get(file.ufsUrl);
 			const fileContents = response.data;

@@ -1,1 +1,0 @@
-ALTER TABLE `users_messages` ADD `createdAt` text NOT NULL;

@@ -12,11 +12,13 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { authClient } from "@/lib/auth-client";
 import DocViewer, {
 	DocViewerRenderers,
 	type IHeaderOverride,
 } from "@cyntler/react-doc-viewer";
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
 
 interface Message {
 	id: number;
@@ -45,6 +47,16 @@ export default function Home() {
 		useState<number>();
 	const [activeDocumentToLineNo, setActiveDocumentToLineNo] =
 		useState<number>();
+	const router = useRouter();
+
+	const {
+		data: session,
+		isPending, //loading state
+		error, //error object
+		refetch, //refetch the session
+	} = authClient.useSession();
+
+	console.log({ session, isPending, error });
 
 	useEffect(() => {
 		const lastMessage = messages[messages.length - 1];
@@ -79,7 +91,6 @@ export default function Home() {
 		const getMessages = async () => {
 			const response = await fetch("/api/answer");
 			const data = await response.json();
-			console.log({ data });
 			setMessages(data.result);
 		};
 
@@ -90,7 +101,6 @@ export default function Home() {
 		const getDocuments = async () => {
 			const response = await fetch("/api/document");
 			const data = await response.json();
-			console.log({ data });
 			setDocuments(data.result);
 		};
 
@@ -122,7 +132,6 @@ export default function Home() {
 			setTimeout(() => {
 				const highlightedElement =
 					container.getElementsByClassName("highlighted")[0];
-				console.log({ highlightedElement });
 				highlightedElement?.scrollIntoView({ behavior: "smooth" });
 			}, 100);
 
@@ -151,13 +160,24 @@ export default function Home() {
 					))}
 				</div>
 
+				<Button
+					onClick={async () => {
+						await authClient.signOut({
+							fetchOptions: {
+								onSuccess: () => router.push("/sign-in"),
+							},
+						});
+					}}
+				>
+					Signout
+				</Button>
+
 				<div className="absolute bottom-0 flex flex-col gap-2 left-0 right-0 p-2">
 					<Separator />
 					<UploadButton
 						endpoint="documentsUploader"
 						onClientUploadComplete={(res) => {
 							// Do something with the response
-							console.log("Files: ", res);
 							alert("Upload Completed");
 						}}
 						onUploadError={(error: Error) => {
@@ -200,7 +220,7 @@ export default function Home() {
 									id: messages.length + 1,
 									content: e.currentTarget.value,
 									role: "user",
-									// sources: [],
+									sources: [],
 								},
 							]);
 							getAnswer(e.currentTarget.value);

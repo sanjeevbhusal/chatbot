@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1749482305476,
-      "tag": "0000_first_darkhawk",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1749540466695,
-      "tag": "0001_public_overlord",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1749545107016,
-      "tag": "0002_spicy_killmonger",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1749546415745,
-      "tag": "0003_chunky_mockingbird",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1749553185572,
-      "tag": "0004_white_hellfire_club",
+      "when": 1749615602242,
+      "tag": "0000_clear_electro",
       "breakpoints": true
     }
   ]
