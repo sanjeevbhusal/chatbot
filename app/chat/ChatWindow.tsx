@@ -3,27 +3,76 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useGetDocumentsQuery } from "@/lib/queries";
 import type { Document, Message } from "@/lib/types";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface ChatWindowProps {
-	messages: Message[];
 	onSelectDocument: (
 		document: Document,
 		fromLineNo: number,
 		toLineNo: number,
 	) => void;
-	getAnswer: (question: string) => Promise<void>;
-	hasInitialMessagesLoaded: boolean;
 }
 
-export default function ChatWindow({
-	messages,
-	getAnswer,
-	onSelectDocument,
-	hasInitialMessagesLoaded,
-}: ChatWindowProps) {
+export default function ChatWindow({ onSelectDocument }: ChatWindowProps) {
+	const [messages, setMessages] = useState<Message[]>([]);
+	const [isReplyPending, setIsReplyPending] = useState(false);
+
+	const initialMessagesQuery = useQuery({
+		queryKey: ["messages"],
+		queryFn: async () => {
+			const response = await fetch("/api/answer");
+			const data = await response.json();
+			const messages = data.result as Message[];
+			setMessages(messages);
+			return messages;
+		},
+	});
+
+	const getAnswerMutation = useMutation({
+		mutationFn: async (question: string) => {
+			const response = await fetch("/api/answer", {
+				method: "POST",
+				body: JSON.stringify({ question }),
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			const data = await response.json();
+			return data.result as Message;
+		},
+		onSuccess: (data) => {
+			setMessages((messages) => [
+				...messages,
+				{
+					id: data.id,
+					content: data.content,
+					role: data.role,
+					sources: data.sources,
+				},
+			]);
+		},
+		onSettled: () => {
+			setIsReplyPending(false);
+		},
+	});
+
+	const getAnswer = async (question: string) => {
+		setMessages((messages) => [
+			...messages,
+			{
+				id: messages.length + 1,
+				content: question,
+				role: "user",
+				sources: [],
+			},
+		]);
+		setIsReplyPending(true);
+		getAnswerMutation.mutate(question);
+	};
+
 	const documentsQuery = useGetDocumentsQuery();
 	const documents = documentsQuery.data ?? [];
 
@@ -35,6 +84,8 @@ export default function ChatWindow({
 				?.scrollIntoView({ behavior: "instant" });
 		}
 	}, [messages]);
+
+	const hasInitialMessagesLoaded = initialMessagesQuery.status === "success";
 
 	return (
 		<>
@@ -118,6 +169,25 @@ export default function ChatWindow({
 				)}
 			</div>
 
+			{isReplyPending && (
+				<p className="text-xl flex gap-2 items-center">
+					<div className="flex items-center space-x-3 text-gray-600 text-sm">
+						<div className="flex h-full items-center space-x-1">
+							<div className="h-5 animate-bounce  animation-delay-200">
+								<div className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+							</div>
+							<div className="h-5 animate-bounce animation-delay-300">
+								<div className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+							</div>
+							<div className="h-5 animate-bounce animation-delay-400">
+								<div className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+							</div>
+						</div>
+						<p className="mb-4 text-lg">Thinking...</p>
+					</div>
+				</p>
+			)}
+
 			<Textarea
 				placeholder={
 					documentsQuery.status === "success" && documents.length === 0
@@ -131,7 +201,9 @@ export default function ChatWindow({
 						e.currentTarget.value = "";
 					}
 				}}
-				disabled={documents.length === 0 || !hasInitialMessagesLoaded}
+				disabled={
+					isReplyPending || documents.length === 0 || !hasInitialMessagesLoaded
+				}
 			/>
 		</>
 	);
