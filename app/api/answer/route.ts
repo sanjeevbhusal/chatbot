@@ -1,8 +1,12 @@
 import type { NextRequest } from "next/server";
 import { chatModel, embeddings } from "../utils";
 import { db } from "@/lib/db";
-import { sql } from "drizzle-orm";
-import { documentsChunkTable, usersMessagesTable } from "@/drizzle/schema";
+import { eq, sql } from "drizzle-orm";
+import {
+	documentsChunkTable,
+	messageSourcesTable,
+	usersMessagesTable,
+} from "@/drizzle/schema";
 
 const systemMessage = {
 	role: "system",
@@ -11,11 +15,64 @@ const systemMessage = {
 };
 
 export async function GET(request: Request) {
-	const usersMessages = await db
+	const messages = await db
 		.select()
 		.from(usersMessagesTable)
-		.orderBy(usersMessagesTable.createdAt);
-	return Response.json({ result: usersMessages });
+		.orderBy(usersMessagesTable.createdAt)
+		.leftJoin(
+			messageSourcesTable,
+			eq(messageSourcesTable.messageId, usersMessagesTable.id),
+		)
+		.leftJoin(
+			documentsChunkTable,
+			eq(documentsChunkTable.id, messageSourcesTable.documentChunkId),
+		);
+
+	const messageIdToSources: Record<
+		number,
+		(typeof documentsChunkTable.$inferSelect)[]
+	> = {};
+
+	for (const message of messages) {
+		const messageId = message.users_messages.id;
+		const source = message.documents_chunk;
+		if (source) {
+			const sources = messageIdToSources[messageId];
+			if (sources) {
+				sources.push(source);
+			} else {
+				messageIdToSources[messageId] = [source];
+			}
+		}
+	}
+
+	const seenMessages = new Set<number>();
+	const serializedMessages = [];
+	for (const message of messages) {
+		if (seenMessages.has(message.users_messages.id)) {
+			continue;
+		}
+
+		seenMessages.add(message.users_messages.id);
+		serializedMessages.push({
+			id: message.users_messages.id,
+			content: message.users_messages.content,
+			role: message.users_messages.role,
+			createdAt: message.users_messages.createdAt,
+			sources: (messageIdToSources[message.users_messages.id] ?? []).map(
+				(source) => {
+					const metadata = JSON.parse(source.metadata ?? "{}");
+					return {
+						name: metadata.name,
+						linesFrom: metadata.loc?.lines?.from,
+						linesTo: metadata.loc?.lines?.to,
+						userDocumentId: source.userDocumentId,
+					};
+				},
+			),
+		});
+	}
+	return Response.json({ result: serializedMessages });
 }
 
 export async function POST(request: NextRequest) {
@@ -65,13 +122,24 @@ export async function POST(request: NextRequest) {
 
 	const response = await chatModel.invoke(messages);
 
-	// add response to messages table.
-	await db.insert(usersMessagesTable).values({
-		userId: 1,
-		role: "assistant",
-		content: response.content,
-		createdAt: new Date().toISOString(),
-	});
+	// add response and sources to messages table
+	const message = await db
+		.insert(usersMessagesTable)
+		.values({
+			userId: 1,
+			role: "assistant",
+			content: response.content,
+			createdAt: new Date().toISOString(),
+		})
+		.returning();
+
+	// add sources to database.
+	await db.insert(messageSourcesTable).values(
+		documentsChunk.map((chunk) => ({
+			messageId: message[0].id,
+			documentChunkId: chunk.id as number,
+		})),
+	);
 
 	return Response.json({ result: response.content });
 }

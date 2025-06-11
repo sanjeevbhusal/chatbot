@@ -6,6 +6,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+#react-doc-viewer #txt-renderer {
+	white-space: pre-wrap;
+	padding: 0;
+}
+
+#react-doc-viewer #txt-renderer .highlighted {
+	background-color: yellow;
+}
+
 @theme inline {
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);

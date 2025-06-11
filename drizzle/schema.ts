@@ -1,4 +1,9 @@
-import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
+import {
+	sqliteTable,
+	integer,
+	text,
+	primaryKey,
+} from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 import { customType } from "drizzle-orm/sqlite-core";
 
@@ -50,3 +55,16 @@ export const usersMessagesTable = sqliteTable("users_messages", {
 	content: text().notNull(),
 	createdAt: text().notNull(),
 });
+
+export const messageSourcesTable = sqliteTable(
+	"message_sources",
+	{
+		messageId: integer()
+			.notNull()
+			.references(() => usersMessagesTable.id),
+		documentChunkId: integer()
+			.notNull()
+			.references(() => documentsChunkTable.id),
+	},
+	(t) => [primaryKey({ columns: [t.messageId, t.documentChunkId] })],
+);
