@@ -28,7 +28,6 @@ export default function Chat() {
 	});
 
 	useEffect(() => {
-		console.log({ activeThreadToSet, data: useGetThreadsQuery?.data });
 		if (useGetThreadsQuery?.data) {
 			if (activeThreadToSet) {
 				const activeThread = useGetThreadsQuery.data.find(
@@ -51,6 +50,7 @@ export default function Chat() {
 					activeThread={activeThread}
 					setActiveDocument={setActiveDocument}
 					setActiveThread={setActiveThread}
+					setActiveThreadToSet={setActiveThreadToSet}
 					threads={threads}
 				/>
 			</div>

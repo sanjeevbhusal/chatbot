@@ -60,6 +60,7 @@ interface SidebarProps {
 	setActiveThread: (thread?: Thread) => void;
 	threads: Thread[];
 	activeThread?: Thread;
+	setActiveThreadToSet: (threadId?: number) => void;
 }
 
 export default function Sidebar({
@@ -67,6 +68,7 @@ export default function Sidebar({
 	setActiveThread,
 	threads,
 	activeThread,
+	setActiveThreadToSet,
 }: SidebarProps) {
 	const [selectedDocumentForDeletion, setSelectedDocumentForDeletion] =
 		useState<Document | undefined>(undefined);
@@ -104,16 +106,30 @@ export default function Sidebar({
 		},
 	});
 
-	const createThreadMutation = useMutation({
-		mutationFn: async () => {
+	const deleteThreadMutation = useMutation({
+		mutationFn: async (threadId: number) => {
 			await fetch("/api/threads", {
-				method: "POST",
+				method: "DELETE",
+				body: JSON.stringify({ threadId }),
+				headers: {
+					"Content-Type": "application/json",
+				},
 			});
 		},
-		onSuccess: () => {
+		onSuccess: (_, threadId) => {
+			const index = threads.map((thread) => thread.id).indexOf(threadId);
+			const nextIndex = index + 1;
+
 			queryClient.invalidateQueries({
 				queryKey: ["threads"],
 			});
+
+			// move to next thread
+			if (threads[nextIndex]) {
+				setActiveThreadToSet(threads[nextIndex].id);
+			} else {
+				setActiveThread(undefined);
+			}
 		},
 	});
 
@@ -247,7 +263,7 @@ export default function Sidebar({
 												variant="destructive"
 												onClick={(e) => {
 													e.stopPropagation();
-													// deleteDocumentMutation.mutate(document.id);
+													deleteThreadMutation.mutate(thread.id);
 												}}
 											>
 												<Trash2 />

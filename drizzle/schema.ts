@@ -95,7 +95,9 @@ export const messageSourcesTable = sqliteTable(
 	{
 		messageId: integer()
 			.notNull()
-			.references(() => usersMessagesTable.id),
+			.references(() => usersMessagesTable.id, {
+				onDelete: "cascade",
+			}),
 		documentChunkId: integer()
 			.notNull()
 			.references(() => documentsChunkTable.id, {

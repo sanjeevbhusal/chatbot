@@ -1,7 +1,7 @@
 import { messageThreadTable } from "@/drizzle/schema";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
 export async function GET(request: Request) {
@@ -71,3 +71,29 @@ export async function PUT(request: Request) {
 
 	return Response.json({ result: "ok" });
 }
+
+export const DELETE = async (request: Request) => {
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
+
+	const userId = session?.user.id;
+
+	if (!userId) {
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
+	}
+
+	const body = await request.json();
+	const threadId = body.threadId;
+
+	await db
+		.delete(messageThreadTable)
+		.where(
+			and(
+				eq(messageThreadTable.id, threadId),
+				eq(messageThreadTable.userId, userId),
+			),
+		);
+
+	return Response.json({ result: "ok" });
+};

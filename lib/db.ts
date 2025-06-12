@@ -14,6 +14,8 @@ export const dbClient = createClient({
 	authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
+dbClient.execute("PRAGMA foreign_keys = ON;");
+
 export const db = drizzle(dbClient);
 
 async function main() {
