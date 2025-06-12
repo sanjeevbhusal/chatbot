@@ -13,7 +13,7 @@ import { headers } from "next/headers";
 const systemMessage = {
 	role: "system",
 	content:
-		"You are an assistant for question-answering tasks. Use the context provided to answer each question. If you don't know the answer, say that you don't know. Use three sentences maximum and keep the answer concise.",
+		"You are an conversational assistant responsible for answering user asked questions. For the latest question, the user will also supply some sources. A source is a block of text extracted from a document. It has metadata and content. You should always use the source to answer the question. If you don't know the answer, say that you don't know. Use three sentences maximum and keep the answer concise.",
 };
 
 export async function GET(request: Request) {
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 	}
 
 	const questionEmbeddings = await embeddings.embedQuery(question);
-	const documentsChunk = await db
+	const documentsChunks = await db
 		.select({
 			id: sql<number>`documents_chunk.id`,
 			content: sql<string>`content`,
@@ -112,11 +112,9 @@ export async function POST(request: NextRequest) {
 		);
 
 	// If there are no documents, throw an error.
-	if (documentsChunk.length === 0) {
+	if (documentsChunks.length === 0) {
 		return Response.json({ error: "No sources found" }, { status: 400 });
 	}
-
-	const sources = documentsChunk.map((chunk) => chunk.content).join("\n");
 
 	// add this user asked message to database.
 	await db.insert(usersMessagesTable).values({
@@ -128,16 +126,30 @@ export async function POST(request: NextRequest) {
 
 	// fetch all user messages.
 	const usersMessages = await db
-		.select()
+		.select({
+			role: usersMessagesTable.role,
+			content: usersMessagesTable.content,
+		})
 		.from(usersMessagesTable)
 		.orderBy(usersMessagesTable.createdAt);
 
 	// change the last message by also adding sources.
 	const lastMessage = usersMessages[usersMessages.length - 1];
-	lastMessage.content = `${question}\n Sources: ${sources}`;
+
+	const messageWithSources = {
+		...lastMessage,
+		sources: documentsChunks.map((chunk) => ({
+			metadata: chunk.metadata,
+			content: chunk.content,
+		})),
+	};
 
 	// build messages array to supply to llm. add system Message as the first message
-	const messages = [systemMessage, ...usersMessages.slice(0, -1), lastMessage];
+	const messages = [
+		systemMessage,
+		...usersMessages.slice(0, -1),
+		messageWithSources,
+	];
 
 	const response = await chatModel.invoke(messages);
 
@@ -156,7 +168,7 @@ export async function POST(request: NextRequest) {
 
 	// add sources to database.
 	await db.insert(messageSourcesTable).values(
-		documentsChunk.map((chunk) => ({
+		documentsChunks.map((chunk) => ({
 			messageId: message.id,
 			documentChunkId: chunk.id as number,
 		})),
@@ -167,7 +179,7 @@ export async function POST(request: NextRequest) {
 		content: message.content,
 		role: message.role,
 		createdAt: message.createdAt,
-		sources: documentsChunk.map((chunk) => {
+		sources: documentsChunks.map((chunk) => {
 			const metadata = JSON.parse(chunk.metadata ?? "{}");
 			return {
 				name: metadata.name,

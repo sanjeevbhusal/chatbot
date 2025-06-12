@@ -121,9 +121,6 @@ export default function ChatWindow({ onSelectDocument }: ChatWindowProps) {
 																className="flex gap-4 items-center"
 																key={source.id}
 															>
-																<p className="font-semibold">
-																	{document?.name}
-																</p>
 																<Button
 																	variant="link"
 																	className="text-blue-500 p-0 h-fit"
@@ -135,7 +132,7 @@ export default function ChatWindow({ onSelectDocument }: ChatWindowProps) {
 																		);
 																	}}
 																>
-																	View (Lines {source.linesFrom} -{" "}
+																	{document?.name} (Lines {source.linesFrom} -{" "}
 																	{source.linesTo})
 																</Button>
 															</div>
