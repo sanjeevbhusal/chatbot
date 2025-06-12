@@ -5,21 +5,38 @@ import { eq, sql } from "drizzle-orm";
 import {
 	documentsChunkTable,
 	messageSourcesTable,
+	messageThreadTable,
 	usersMessagesTable,
 } from "@/drizzle/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { writeFileSync } from "fs";
 
 const systemMessage = {
 	role: "system",
 	content:
-		"You are an conversational assistant responsible for answering user asked questions. For the latest question, the user will also supply some sources. A source is a block of text extracted from a document. It has metadata and content. You should always use the source to answer the question. If you don't know the answer, say that you don't know. Use three sentences maximum and keep the answer concise.",
+		"You are an conversational assistant responsible for answering question on behalf of SecurityPal company. User will ask you questions related to SecurityPal company's products and services. Each question will have sources. A source is a part of a document. You should read the sources in detail and generate a answer. If you don't find the answer in the sources, say that you don't know. Use three sentences maximum and keep the answer concise.",
 };
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
+
+	const userId = session?.user.id;
+
+	if (!userId) {
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
+	}
+
+	const threadId = Number(request.nextUrl.searchParams.get("threadId"));
+	if (!threadId) {
+		return Response.json({ error: "Thread Id is required" });
+	}
 	const messages = await db
 		.select()
 		.from(usersMessagesTable)
+		.where(eq(usersMessagesTable.threadId, threadId))
 		.orderBy(usersMessagesTable.createdAt)
 		.leftJoin(
 			messageSourcesTable,
@@ -90,9 +107,23 @@ export async function POST(request: NextRequest) {
 
 	const body = await request.json();
 	const question = body.question as string;
+	let threadId = body.threadId as number | undefined;
 
 	if (!question) {
 		return new Response("Question not provided", { status: 400 });
+	}
+
+	if (!threadId) {
+		const query = await db
+			.insert(messageThreadTable)
+			.values({
+				name: question,
+				userId: userId,
+			})
+			.returning({
+				id: messageThreadTable.id,
+			});
+		threadId = query[0].id;
 	}
 
 	const questionEmbeddings = await embeddings.embedQuery(question);
@@ -122,6 +153,7 @@ export async function POST(request: NextRequest) {
 		content: question,
 		role: "user",
 		createdAt: new Date().toISOString(),
+		threadId: threadId,
 	});
 
 	// fetch all user messages.
@@ -135,21 +167,13 @@ export async function POST(request: NextRequest) {
 
 	// change the last message by also adding sources.
 	const lastMessage = usersMessages[usersMessages.length - 1];
-
-	const messageWithSources = {
-		...lastMessage,
-		sources: documentsChunks.map((chunk) => ({
-			metadata: chunk.metadata,
-			content: chunk.content,
-		})),
-	};
+	const sources = documentsChunks.map((chunk) => chunk.content).join("\n");
+	lastMessage.content = `${question}\n Sources: ${sources}`;
 
 	// build messages array to supply to llm. add system Message as the first message
-	const messages = [
-		systemMessage,
-		...usersMessages.slice(0, -1),
-		messageWithSources,
-	];
+	const messages = [systemMessage, ...usersMessages.slice(0, -1), lastMessage];
+
+	writeFileSync("./vector.txt", JSON.stringify(messages), "utf-8");
 
 	const response = await chatModel.invoke(messages);
 
@@ -159,8 +183,9 @@ export async function POST(request: NextRequest) {
 		.values({
 			userId: userId,
 			role: "assistant",
-			content: response.content,
+			content: response.content as string,
 			createdAt: new Date().toISOString(),
+			threadId: threadId,
 		})
 		.returning();
 
@@ -179,6 +204,7 @@ export async function POST(request: NextRequest) {
 		content: message.content,
 		role: message.role,
 		createdAt: message.createdAt,
+		threadId: threadId,
 		sources: documentsChunks.map((chunk) => {
 			const metadata = JSON.parse(chunk.metadata ?? "{}");
 			return {

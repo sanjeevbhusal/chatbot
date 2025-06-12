@@ -2,6 +2,7 @@ export interface Message {
 	id: number;
 	content: string;
 	role: "user" | "assistant";
+	threadId?: string;
 	sources: {
 		id: number;
 		userDocumentId: number;
@@ -15,4 +16,9 @@ export interface Document {
 	name: string;
 	url: string;
 	userId: string;
+}
+
+export interface Thread {
+	id: number;
+	name: string;
 }

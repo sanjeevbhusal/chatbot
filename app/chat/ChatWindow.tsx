@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useGetDocumentsQuery } from "@/lib/queries";
-import type { Document, Message } from "@/lib/types";
+import type { Document, Message, Thread } from "@/lib/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import { Loader2 } from "lucide-react";
@@ -14,28 +14,39 @@ interface ChatWindowProps {
 		fromLineNo: number,
 		toLineNo: number,
 	) => void;
+	activeThread?: Thread;
 }
 
-export default function ChatWindow({ onSelectDocument }: ChatWindowProps) {
+export default function ChatWindow({
+	onSelectDocument,
+	activeThread,
+}: ChatWindowProps) {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [isReplyPending, setIsReplyPending] = useState(false);
 
 	const initialMessagesQuery = useQuery({
-		queryKey: ["messages"],
+		queryKey: ["messages", activeThread?.id],
 		queryFn: async () => {
-			const response = await fetch("/api/answer");
+			const response = await fetch(`/api/answer?threadId=${activeThread?.id}`);
 			const data = await response.json();
-			const messages = data.result as Message[];
-			setMessages(messages);
-			return messages;
+			return data.result as Message[];
 		},
+		enabled: !!activeThread,
 	});
+
+	useEffect(() => {
+		if (initialMessagesQuery?.data) {
+			setMessages(initialMessagesQuery.data);
+		}
+	}, [initialMessagesQuery?.data]);
+
+	console.log(activeThread?.id, initialMessagesQuery.status, messages);
 
 	const getAnswerMutation = useMutation({
 		mutationFn: async (question: string) => {
 			const response = await fetch("/api/answer", {
 				method: "POST",
-				body: JSON.stringify({ question }),
+				body: JSON.stringify({ question, threadId: activeThread?.id }),
 				headers: {
 					"Content-Type": "application/json",
 				},
@@ -50,6 +61,7 @@ export default function ChatWindow({ onSelectDocument }: ChatWindowProps) {
 					id: data.id,
 					content: data.content,
 					role: data.role,
+					threadId: data.threadId,
 					sources: data.sources,
 				},
 			]);
@@ -66,6 +78,7 @@ export default function ChatWindow({ onSelectDocument }: ChatWindowProps) {
 				id: messages.length + 1,
 				content: question,
 				role: "user",
+				threadId: threadId,
 				sources: [],
 			},
 		]);

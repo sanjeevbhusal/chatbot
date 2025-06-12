@@ -61,10 +61,30 @@ export const documentsChunkTable = sqliteTable("documents_chunk", {
 
 export const usersMessagesTable = sqliteTable("users_messages", {
 	id: integer().primaryKey({ autoIncrement: true }),
-	userId: text().references(() => usersTable.id),
+	userId: text()
+		.references(() => usersTable.id)
+		.notNull(),
 	role: text().notNull(),
 	content: text().notNull(),
 	createdAt: text().notNull(),
+	threadId: integer()
+		.references(() => messageThreadTable.id, {
+			onDelete: "cascade",
+		})
+		.notNull(),
+});
+
+export const messageThreadTable = sqliteTable("message_thread", {
+	id: integer().primaryKey({ autoIncrement: true }),
+	name: text(),
+	userId: text()
+		.references(() => usersTable.id, {
+			onDelete: "cascade",
+		})
+		.notNull(),
+	createdAt: integer("created_at", { mode: "timestamp" })
+		.notNull()
+		.$defaultFn(() => /* @__PURE__ */ new Date()),
 });
 
 export const messageSourcesTable = sqliteTable(

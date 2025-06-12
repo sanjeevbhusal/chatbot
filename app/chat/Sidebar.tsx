@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
 import { useGetDocumentsQuery } from "@/lib/queries";
-import type { Document } from "@/lib/types";
+import type { Document, Thread } from "@/lib/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CircleHelp, EllipsisVertical, Eye, Plus, Trash2 } from "lucide-react";
 import { CldUploadButton } from "next-cloudinary";
@@ -33,9 +33,15 @@ import { useState } from "react";
 
 interface SidebarProps {
 	setActiveDocument: (document?: Document) => void;
+	setActiveThread: (thread: Thread) => void;
+	threads: Thread[];
 }
 
-export default function Sidebar({ setActiveDocument }: SidebarProps) {
+export default function Sidebar({
+	setActiveDocument,
+	setActiveThread,
+	threads,
+}: SidebarProps) {
 	const [selectedDocumentForDeletion, setSelectedDocumentForDeletion] =
 		useState<Document | undefined>(undefined);
 
@@ -84,6 +90,19 @@ export default function Sidebar({ setActiveDocument }: SidebarProps) {
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: ["documents"],
+			});
+		},
+	});
+
+	const createThreadMutation = useMutation({
+		mutationFn: async () => {
+			await fetch("/api/threads", {
+				method: "POST",
+			});
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["threads"],
 			});
 		},
 	});
@@ -224,6 +243,51 @@ export default function Sidebar({ setActiveDocument }: SidebarProps) {
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
+
+			<div className="flex justify-between gap-2 px-4 py-2">
+				<div className="flex items-center gap-2 font-semibold text-xl">
+					<span>Threads </span>
+				</div>
+			</div>
+			<Separator />
+
+			<div className="p-4">
+				<Button
+					className="w-full"
+					onClick={() => createThreadMutation.mutate()}
+				>
+					<Plus /> New Thread
+				</Button>
+
+				{threads.map((thread) => (
+					<div className="flex gap-4 mt-8 items-center" key={thread.id}>
+						<Button
+							variant="outline"
+							className="text-blue-500 w-full justify-between"
+							onClick={() => setActiveThread(thread)}
+						>
+							<p className="font-semibold">{thread.name}</p>
+							<DropdownMenu>
+								<DropdownMenuTrigger className="cursor-pointer">
+									<EllipsisVertical />
+								</DropdownMenuTrigger>
+								<DropdownMenuContent>
+									<DropdownMenuItem
+										variant="destructive"
+										onClick={(e) => {
+											e.stopPropagation();
+											// deleteDocumentMutation.mutate(document.id);
+										}}
+									>
+										<Trash2 />
+										Delete
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</Button>
+					</div>
+				))}
+			</div>
 		</div>
 	);
 }
