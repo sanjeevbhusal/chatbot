@@ -1,11 +1,20 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { authClient } from "@/lib/auth-client";
 import { useGetDocumentsQuery } from "@/lib/queries";
 import type { Document, Message, Thread } from "@/lib/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface ChatWindowProps {
@@ -23,6 +32,8 @@ export default function ChatWindow({
 }: ChatWindowProps) {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [isReplyPending, setIsReplyPending] = useState(false);
+	const { data: session } = authClient.useSession();
+	const router = useRouter();
 
 	const initialMessagesQuery = useQuery({
 		queryKey: ["messages", activeThread?.id],
@@ -103,14 +114,50 @@ export default function ChatWindow({
 	return (
 		<>
 			<div
-				className={clsx("h-[86%] overflow-scroll flex flex-col", {
+				className={clsx("h-[86%] overflow-scroll flex flex-col relative", {
 					"flex items-center justify-center": !hasInitialMessagesLoaded,
 				})}
 			>
+				<div className="absolute top-0 w-full border-b px-4 py-2 flex justify-between items-center bg-white">
+					<span className="text-xl font-bold">{activeThread?.name}</span>
+					<div>
+						{" "}
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild className="w-fit ml-auto">
+								<Avatar>
+									<AvatarImage
+										src={session?.user.image ?? ""}
+										className="h-8 w-8 rounded-full"
+										alt={session?.user.name ?? ""}
+									/>
+									<AvatarFallback>{session?.user.name}</AvatarFallback>
+								</Avatar>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent side="top">
+								<DropdownMenuItem
+									onClick={async () => {
+										await authClient.signOut({
+											fetchOptions: {
+												onSuccess: () => router.push("/sign-in"),
+											},
+										});
+									}}
+								>
+									Logout
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</div>
+				</div>
+
 				{hasInitialMessagesLoaded ? (
 					messages.map((message, index) => {
 						return (
-							<div id={message.id.toString()} key={message.id}>
+							<div
+								className={clsx("px-4", { "pt-14": index === 0 })}
+								id={message.id.toString()}
+								key={message.id}
+							>
 								{message.role === "user" && (
 									<div className="text-2xl font-bold mr-4">
 										{message.content}
@@ -180,7 +227,7 @@ export default function ChatWindow({
 			</div>
 
 			{isReplyPending && (
-				<p className="text-xl flex gap-2 items-center">
+				<p className="text-xl flex gap-2 items-center px-4">
 					<div className="flex items-center space-x-3 text-gray-600 text-sm">
 						<div className="flex h-full items-center space-x-1">
 							<div className="h-5 animate-bounce  animation-delay-200">
@@ -204,7 +251,7 @@ export default function ChatWindow({
 						? "Please add at least 1 source before asking questions"
 						: "Type your message here..."
 				}
-				className="min-h-[14%] border rounded-lg p-2 disabled:text-black disabled:opacity-100 disabled:text-lg"
+				className="mx-4 min-h-[14%] border rounded-lg p-2 disabled:text-black disabled:opacity-100 disabled:text-lg"
 				onKeyUp={(e) => {
 					if (e.key === "Enter") {
 						getAnswer(e.currentTarget.value);

@@ -43,7 +43,7 @@ export default function Chat() {
 				/>
 			</div>
 
-			<div className="w-[80%] h-full p-4  border border-t-0 relative flex flex-col gap-12">
+			<div className="w-[80%] h-full border border-t-0 relative flex flex-col gap-12">
 				<ChatWindow
 					onSelectDocument={(
 						document: Document,

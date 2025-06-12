@@ -8,17 +8,14 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogClose,
 	DialogContent,
-	DialogDescription,
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-	DialogTrigger,
 } from "@/components/ui/dialog";
 import {
 	DropdownMenu,
@@ -30,21 +27,18 @@ import {} from "@/components/ui/form";
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { authClient } from "@/lib/auth-client";
 import { useGetDocumentsQuery } from "@/lib/queries";
 import type { Document, Thread } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -59,7 +53,6 @@ import {
 	Trash2,
 } from "lucide-react";
 import { CldUploadButton } from "next-cloudinary";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -81,12 +74,22 @@ export default function Sidebar({
 		Thread | undefined
 	>(undefined);
 
-	const router = useRouter();
 	const queryClient = useQueryClient();
-	const { data: session } = authClient.useSession();
 
 	const documentsQuery = useGetDocumentsQuery();
-	const documents = documentsQuery.data ?? [];
+	const documents = documentsQuery.data
+		? [
+				...documentsQuery.data,
+				...documentsQuery.data,
+				...documentsQuery.data,
+				...documentsQuery.data,
+				...documentsQuery.data,
+				...documentsQuery.data,
+				...documentsQuery.data,
+				...documentsQuery.data,
+				...documentsQuery.data,
+			]
+		: [];
 
 	const deleteDocumentMutation = useMutation({
 		mutationFn: async (documentId: number) => {
@@ -183,241 +186,226 @@ export default function Sidebar({
 	}
 
 	return (
-		<div>
-			<div className="flex justify-between gap-2 px-4 py-2">
-				<div className="flex items-center gap-2 font-semibold text-xl">
-					<span>Sources </span>
-					<Tooltip>
-						<TooltipTrigger>
-							<CircleHelp />
-						</TooltipTrigger>
-						<TooltipContent>
-							The AI Model will answer your questions from the documents
-							uploaded.
-						</TooltipContent>
-					</Tooltip>{" "}
+		<div className="h-full flex flex-col gap-8">
+			<div className="basis-[calc(50%-32px)] shrink-0 grow-0 flex flex-col gap-0">
+				<div className="basis-[44px] shrink-0">
+					<div className="flex justify-between items-center  px-4 py-2">
+						<div className="flex items-center gap-2 font-semibold text-xl">
+							<span>Sources </span>
+							<Tooltip>
+								<TooltipTrigger>
+									<CircleHelp />
+								</TooltipTrigger>
+								<TooltipContent>
+									The AI Model will answer your questions from the documents
+									uploaded.
+								</TooltipContent>
+							</Tooltip>{" "}
+						</div>
+						<Button
+							asChild
+							className="w-fit cursor-pointer"
+							size="sm"
+							variant="outline"
+						>
+							<CldUploadButton
+								onSuccess={(r) => {
+									const info = r.info as Record<string, string>;
+									const publicUrl = info.secure_url;
+									const fileName = info.original_filename;
+									uploadDocumentMutation.mutate({ publicUrl, fileName });
+								}}
+								signatureEndpoint="/api/document/upload-signature"
+							>
+								<Plus /> Upload
+							</CldUploadButton>
+						</Button>
+					</div>
+					<Separator />
 				</div>
 
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild className="w-fit ml-auto">
-						<Avatar>
-							<AvatarImage
-								src={session?.user.image ?? ""}
-								className="h-8 w-8 rounded-full"
-								alt={session?.user.name ?? ""}
-							/>
-							<AvatarFallback>{session?.user.name}</AvatarFallback>
-						</Avatar>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent side="top">
-						<DropdownMenuItem
-							onClick={async () => {
-								await authClient.signOut({
-									fetchOptions: {
-										onSuccess: () => router.push("/sign-in"),
-									},
-								});
-							}}
-						>
-							Logout
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
-			</div>
-			<Separator />
+				<div className="basis-[44px] grow overflow-scroll">
+					{documents.length === 0 ? (
+						<p className="p-4 text-slate-600">No Sources Uploaded</p>
+					) : (
+						<div className="flex flex-col gap-4 p-4">
+							{documents.map((document) => (
+								<div className="flex gap-4 items-center" key={document.id}>
+									<Button
+										variant="secondary"
+										className="w-full justify-between cursor-pointer"
+										onClick={() => setActiveDocument(document)}
+									>
+										<p className="font-semibold">{document.name}</p>
+										<DropdownMenu>
+											<DropdownMenuTrigger className="cursor-pointer">
+												<EllipsisVertical />
+											</DropdownMenuTrigger>
+											<DropdownMenuContent>
+												<DropdownMenuItem
+													onClick={(e) => {
+														e.stopPropagation();
+														setActiveDocument(document);
+													}}
+												>
+													<Eye />
+													View
+												</DropdownMenuItem>
+												<DropdownMenuItem
+													variant="destructive"
+													onClick={(e) => {
+														e.stopPropagation();
+														deleteDocumentMutation.mutate(document.id);
+													}}
+												>
+													<Trash2 />
+													Delete
+												</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									</Button>
+								</div>
+							))}
+						</div>
+					)}
+				</div>
 
-			<div className="p-4">
-				<Button asChild className="w-full">
-					<CldUploadButton
-						onSuccess={(r) => {
-							const info = r.info as Record<string, string>;
-							const publicUrl = info.secure_url;
-							const fileName = info.original_filename;
-							uploadDocumentMutation.mutate({ publicUrl, fileName });
-						}}
-						signatureEndpoint="/api/document/upload-signature"
-					>
-						<Plus /> Upload
-					</CldUploadButton>
-				</Button>
-			</div>
-
-			{documents.length === 0 ? (
-				<p className="p-4 text-slate-600">No Sources Uploaded</p>
-			) : (
-				<div className="flex flex-col gap-2 p-4">
-					{documents.map((document) => (
-						<div className="flex gap-4 items-center" key={document.id}>
-							<Button
-								variant="outline"
-								className="text-blue-500 w-full justify-between"
-								onClick={() => setActiveDocument(document)}
+				<AlertDialog
+					open={!!selectedDocumentForDeletion}
+					onOpenChange={() => setSelectedDocumentForDeletion(undefined)}
+				>
+					<AlertDialogContent>
+						<AlertDialogHeader>
+							<AlertDialogTitle>
+								Delete {selectedDocumentForDeletion?.name}
+							</AlertDialogTitle>
+							<AlertDialogDescription>
+								Are you absolutely sure? This action cannot be undone
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel>Cancel</AlertDialogCancel>
+							<AlertDialogAction
+								onClick={async (e) => {
+									e.stopPropagation();
+									await fetch("/api/document", {
+										method: "DELETE",
+										body: JSON.stringify({
+											documentId: selectedDocumentForDeletion?.id,
+										}),
+									});
+									setSelectedDocumentForDeletion(undefined);
+								}}
 							>
-								<p className="font-semibold">{document.name}</p>
+								Delete
+							</AlertDialogAction>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
+			</div>
+
+			<div className="basis-[calc(50%-32px)] shrink-0 grow-0 flex flex-col gap-0">
+				<div className="basis-[44px] shrink-0">
+					<div className="flex justify-between gap-2 px-4 py-2">
+						<span className="font-semibold  text-xl">Threads </span>
+						<Button
+							className="w-fit cursor-pointer"
+							size="sm"
+							variant="outline"
+							onClick={() => createThreadMutation.mutate()}
+						>
+							<Plus /> New
+						</Button>{" "}
+					</div>
+					<Separator />
+				</div>
+
+				<div className="p-4 basis-[44px] grow overflow-scroll">
+					<div className="flex flex-col gap-4 ">
+						{threads.map((thread) => (
+							<Button
+								key={thread.id}
+								variant="secondary"
+								className="w-full justify-between cursor-pointer"
+								onClick={() => setActiveThread(thread)}
+							>
+								<p className="font-semibold">{thread.name}</p>
 								<DropdownMenu>
 									<DropdownMenuTrigger className="cursor-pointer">
 										<EllipsisVertical />
 									</DropdownMenuTrigger>
 									<DropdownMenuContent>
 										<DropdownMenuItem
-											onClick={(e) => {
-												e.stopPropagation();
-												setActiveDocument(document);
-											}}
-										>
-											<Eye />
-											View
-										</DropdownMenuItem>
-										<DropdownMenuItem
 											variant="destructive"
 											onClick={(e) => {
 												e.stopPropagation();
-												deleteDocumentMutation.mutate(document.id);
+												// deleteDocumentMutation.mutate(document.id);
 											}}
 										>
 											<Trash2 />
 											Delete
 										</DropdownMenuItem>
+										<DropdownMenuItem
+											onClick={(e) => {
+												e.stopPropagation();
+												setSelectedThreadForRenaming(thread);
+											}}
+										>
+											<Pen />
+											Rename
+										</DropdownMenuItem>
 									</DropdownMenuContent>
 								</DropdownMenu>
 							</Button>
-						</div>
-					))}
-				</div>
-			)}
-
-			<AlertDialog
-				open={!!selectedDocumentForDeletion}
-				onOpenChange={() => setSelectedDocumentForDeletion(undefined)}
-			>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>
-							Delete {selectedDocumentForDeletion?.name}
-						</AlertDialogTitle>
-						<AlertDialogDescription>
-							Are you absolutely sure? This action cannot be undone
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel>Cancel</AlertDialogCancel>
-						<AlertDialogAction
-							onClick={async (e) => {
-								e.stopPropagation();
-								await fetch("/api/document", {
-									method: "DELETE",
-									body: JSON.stringify({
-										documentId: selectedDocumentForDeletion?.id,
-									}),
-								});
-								setSelectedDocumentForDeletion(undefined);
-							}}
-						>
-							Delete
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
-
-			<div className="flex justify-between gap-2 px-4 py-2">
-				<div className="flex items-center gap-2 font-semibold text-xl">
-					<span>Threads </span>
-				</div>
-			</div>
-			<Separator />
-
-			<div className="p-4">
-				<Button
-					className="w-full"
-					onClick={() => createThreadMutation.mutate()}
-				>
-					<Plus /> New Thread
-				</Button>
-
-				{threads.map((thread) => (
-					<div className="flex gap-4 mt-8 items-center" key={thread.id}>
-						<Button
-							variant="outline"
-							className="text-blue-500 w-full justify-between"
-							onClick={() => setActiveThread(thread)}
-						>
-							<p className="font-semibold">{thread.name}</p>
-							<DropdownMenu>
-								<DropdownMenuTrigger className="cursor-pointer">
-									<EllipsisVertical />
-								</DropdownMenuTrigger>
-								<DropdownMenuContent>
-									<DropdownMenuItem
-										variant="destructive"
-										onClick={(e) => {
-											e.stopPropagation();
-											// deleteDocumentMutation.mutate(document.id);
-										}}
-									>
-										<Trash2 />
-										Delete
-									</DropdownMenuItem>
-									<DropdownMenuItem
-										onClick={(e) => {
-											e.stopPropagation();
-											setSelectedThreadForRenaming(thread);
-										}}
-									>
-										<Pen />
-										Rename
-									</DropdownMenuItem>
-								</DropdownMenuContent>
-							</DropdownMenu>
-						</Button>
+						))}
 					</div>
-				))}
-
-				<Dialog
-					open={!!selectedThreadForRenaming}
-					onOpenChange={() => setSelectedThreadForRenaming(undefined)}
-				>
-					<DialogContent>
-						<DialogHeader>
-							<DialogTitle>
-								Rename {selectedThreadForRenaming?.name}
-							</DialogTitle>
-						</DialogHeader>
-						<Form {...form}>
-							<form
-								onSubmit={form.handleSubmit(onSubmit)}
-								className="space-y-8"
-							>
-								<FormField
-									control={form.control}
-									name="name"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Name</FormLabel>
-											<FormControl>
-												<Input
-													// defaultValue={selectedThreadForRenaming?.name}
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<DialogFooter>
-									<DialogClose asChild>
-										<Button variant="outline">Cancel</Button>
-									</DialogClose>
-									<Button type="submit">
-										Save changes
-										{renameThreadMutation.isPending && (
-											<Loader2 className="animate-spin" />
+					<Dialog
+						open={!!selectedThreadForRenaming}
+						onOpenChange={() => setSelectedThreadForRenaming(undefined)}
+					>
+						<DialogContent>
+							<DialogHeader>
+								<DialogTitle>
+									Rename {selectedThreadForRenaming?.name}
+								</DialogTitle>
+							</DialogHeader>
+							<Form {...form}>
+								<form
+									onSubmit={form.handleSubmit(onSubmit)}
+									className="space-y-8"
+								>
+									<FormField
+										control={form.control}
+										name="name"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>Name</FormLabel>
+												<FormControl>
+													<Input
+														// defaultValue={selectedThreadForRenaming?.name}
+														{...field}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
 										)}
-									</Button>
-								</DialogFooter>
-							</form>
-						</Form>
-					</DialogContent>
-				</Dialog>
+									/>
+									<DialogFooter>
+										<DialogClose asChild>
+											<Button variant="outline">Cancel</Button>
+										</DialogClose>
+										<Button type="submit">
+											Save changes
+											{renameThreadMutation.isPending && (
+												<Loader2 className="animate-spin" />
+											)}
+										</Button>
+									</DialogFooter>
+								</form>
+							</Form>
+						</DialogContent>
+					</Dialog>
+				</div>
 			</div>
 		</div>
 	);
