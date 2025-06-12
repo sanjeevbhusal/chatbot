@@ -9,9 +9,7 @@ import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 
 cloudinary.v2.config({
-	cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-	api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-	api_secret: process.env.CLOUDINARY_API_SECRET,
+	secure: true,
 });
 
 export async function GET(request: Request) {
@@ -30,21 +28,44 @@ export async function POST(request: Request) {
 		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
-	const body = await request.json();
-	const publicUrl = body.publicUrl;
-	const fileName = body.fileName;
+	const formData = await request.formData();
+	const file = formData.get("file") as File | null;
 
-	const response = await axios.get(publicUrl);
-	const fileContents = response.data;
+	if (!file) {
+		return Response.json({ error: "File not found" }, { status: 400 });
+	}
 
+	// 1. Get buffer from file
+	const bytes = await file.arrayBuffer();
+	const buffer = Buffer.from(bytes);
+
+	let uploadResult: cloudinary.UploadApiResponse | undefined;
+
+	try {
+		uploadResult = await new Promise((resolve) => {
+			cloudinary.v2.uploader
+				.upload_stream({ resource_type: "raw" }, (error, result) => {
+					return resolve(result);
+				})
+				.end(buffer);
+		});
+
+		if (!uploadResult) {
+			throw new Error();
+		}
+	} catch (error) {
+		return Response.json({ error: "Something went wrong" }, { status: 400 });
+	}
+
+	const fileContents = await file.text();
 	const document = new Document({
-		metadata: { name: fileName },
+		metadata: { name: file.name },
 		pageContent: fileContents,
 	});
 
 	const documents = await splitDocument(document);
 
-	// take vector for each of these document.
+	// take vector for each of these documents.
 	const documentEmbeddings = await embeddings.embedDocuments(
 		documents.map((doc) => doc.pageContent),
 	);
@@ -53,8 +74,8 @@ export async function POST(request: Request) {
 	const userDocuments = await db
 		.insert(userDocumentsTable)
 		.values({
-			name: fileName,
-			url: publicUrl,
+			name: file.name,
+			url: uploadResult.secure_url,
 			userId,
 		})
 		.returning();
@@ -67,11 +88,9 @@ export async function POST(request: Request) {
 			userDocumentId: userDocuments[0].id,
 			vector: documentEmbeddings[index],
 		}));
-
 	await db.insert(documentsChunkTable).values(documentChunks);
 
-	// !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
-	return Response.json({ uploadedBy: 1 });
+	return Response.json({ result: "ok" });
 }
 
 export async function DELETE(request: Request) {

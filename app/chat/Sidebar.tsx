@@ -53,10 +53,10 @@ import {
 	Plus,
 	Trash2,
 } from "lucide-react";
-import { CldUploadButton } from "next-cloudinary";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import UploadFileModal from "./UploadFileModal";
 
 interface SidebarProps {
 	setActiveDocument: (document?: Document) => void;
@@ -74,6 +74,7 @@ export default function Sidebar({
 	const [selectedThreadForRenaming, setSelectedThreadForRenaming] = useState<
 		Thread | undefined
 	>(undefined);
+	const [isUploadFileModalOpen, setIsUploadFileModalOpen] = useState(false);
 
 	const queryClient = useQueryClient();
 
@@ -94,28 +95,6 @@ export default function Sidebar({
 		},
 		onSuccess: () => {
 			setSelectedDocumentForDeletion(undefined);
-			queryClient.invalidateQueries({
-				queryKey: ["documents"],
-			});
-		},
-	});
-
-	const uploadDocumentMutation = useMutation({
-		mutationFn: async ({
-			publicUrl,
-			fileName,
-		}: { publicUrl: string; fileName: string }) => {
-			const response = await fetch("/api/document", {
-				method: "POST",
-				body: JSON.stringify({ publicUrl, fileName }),
-				headers: {
-					"Content-Type": "application/json",
-				},
-			});
-			const data = await response.json();
-			return data.result;
-		},
-		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: ["documents"],
 			});
@@ -192,22 +171,13 @@ export default function Sidebar({
 							</Tooltip>{" "}
 						</div>
 						<Button
-							asChild
 							className="w-fit cursor-pointer"
 							size="sm"
 							variant="outline"
+							onClick={() => setIsUploadFileModalOpen(true)}
 						>
-							<CldUploadButton
-								onSuccess={(r) => {
-									const info = r.info as Record<string, string>;
-									const publicUrl = info.secure_url;
-									const fileName = info.original_filename;
-									uploadDocumentMutation.mutate({ publicUrl, fileName });
-								}}
-								signatureEndpoint="/api/document/upload-signature"
-							>
-								<Plus /> Upload
-							</CldUploadButton>
+							<Plus />
+							Upload
 						</Button>
 					</div>
 					<Separator />
@@ -416,6 +386,11 @@ export default function Sidebar({
 					</Dialog>
 				</div>
 			</div>
+
+			<UploadFileModal
+				open={isUploadFileModalOpen}
+				onOpenChange={(open) => setIsUploadFileModalOpen(open)}
+			/>
 		</div>
 	);
 }
