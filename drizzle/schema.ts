@@ -28,6 +28,9 @@ export const userDocumentsTable = sqliteTable("user_documents", {
 	userId: text().references(() => usersTable.id),
 	name: text(),
 	url: text(),
+	createdAt: integer("created_at", { mode: "timestamp" })
+		.$defaultFn(() => /* @__PURE__ */ new Date())
+		.notNull(),
 });
 
 const float32Array = customType<{

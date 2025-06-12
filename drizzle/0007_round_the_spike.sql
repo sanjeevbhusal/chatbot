@@ -1,0 +1,1 @@
+ALTER TABLE `user_documents` ADD `created_at` integer NOT NULL;

@@ -6,14 +6,17 @@ import cloudinary from "cloudinary";
 import { embeddings, splitDocument } from "../utils";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 cloudinary.v2.config({
 	secure: true,
 });
 
 export async function GET(request: Request) {
-	const documents = await db.select().from(userDocumentsTable);
+	const documents = await db
+		.select()
+		.from(userDocumentsTable)
+		.orderBy(desc(userDocumentsTable.createdAt));
 	return Response.json({ result: documents });
 }
 

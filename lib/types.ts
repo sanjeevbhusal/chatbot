@@ -2,7 +2,7 @@ export interface Message {
 	id: number;
 	content: string;
 	role: "user" | "assistant";
-	threadId?: string;
+	threadId?: number;
 	sources: {
 		id: number;
 		userDocumentId: number;

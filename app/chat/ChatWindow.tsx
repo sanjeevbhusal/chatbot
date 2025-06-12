@@ -51,8 +51,6 @@ export default function ChatWindow({
 		}
 	}, [initialMessagesQuery?.data]);
 
-	console.log(activeThread?.id, initialMessagesQuery.status, messages);
-
 	const getAnswerMutation = useMutation({
 		mutationFn: async (question: string) => {
 			const response = await fetch("/api/answer", {
