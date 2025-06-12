@@ -8,7 +8,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogClose,
@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useGetDocumentsQuery } from "@/lib/queries";
 import type { Document, Thread } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -77,19 +78,7 @@ export default function Sidebar({
 	const queryClient = useQueryClient();
 
 	const documentsQuery = useGetDocumentsQuery();
-	const documents = documentsQuery.data
-		? [
-				...documentsQuery.data,
-				...documentsQuery.data,
-				...documentsQuery.data,
-				...documentsQuery.data,
-				...documentsQuery.data,
-				...documentsQuery.data,
-				...documentsQuery.data,
-				...documentsQuery.data,
-				...documentsQuery.data,
-			]
-		: [];
+	const documents = documentsQuery.data ?? [];
 
 	const deleteDocumentMutation = useMutation({
 		mutationFn: async (documentId: number) => {
@@ -231,10 +220,20 @@ export default function Sidebar({
 						<div className="flex flex-col gap-4 p-4">
 							{documents.map((document) => (
 								<div className="flex gap-4 items-center" key={document.id}>
-									<Button
-										variant="secondary"
-										className="w-full justify-between cursor-pointer"
+									<div
+										className={cn(
+											buttonVariants({
+												variant: "secondary",
+												size: "sm",
+												className: "w-full justify-between cursor-pointer",
+											}),
+										)}
 										onClick={() => setActiveDocument(document)}
+										onKeyUp={(e) => {
+											if (e.key === "Enter") {
+												setActiveDocument(document);
+											}
+										}}
 									>
 										<p className="font-semibold">{document.name}</p>
 										<DropdownMenu>
@@ -263,7 +262,7 @@ export default function Sidebar({
 												</DropdownMenuItem>
 											</DropdownMenuContent>
 										</DropdownMenu>
-									</Button>
+									</div>
 								</div>
 							))}
 						</div>
@@ -323,11 +322,21 @@ export default function Sidebar({
 				<div className="p-4 basis-[44px] grow overflow-scroll">
 					<div className="flex flex-col gap-4 ">
 						{threads.map((thread) => (
-							<Button
+							<div
 								key={thread.id}
-								variant="secondary"
-								className="w-full justify-between cursor-pointer"
+								className={cn(
+									buttonVariants({
+										variant: "secondary",
+										size: "sm",
+										className: "w-full justify-between cursor-pointer",
+									}),
+								)}
 								onClick={() => setActiveThread(thread)}
+								onKeyUp={(e) => {
+									if (e.key === "Enter") {
+										setActiveThread(thread);
+									}
+								}}
 							>
 								<p className="font-semibold">{thread.name}</p>
 								<DropdownMenu>
@@ -356,7 +365,7 @@ export default function Sidebar({
 										</DropdownMenuItem>
 									</DropdownMenuContent>
 								</DropdownMenu>
-							</Button>
+							</div>
 						))}
 					</div>
 					<Dialog
