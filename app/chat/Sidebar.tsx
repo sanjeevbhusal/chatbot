@@ -11,11 +11,33 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {} from "@/components/ui/form";
+import {
+	Form,
+	FormControl,
+	FormDescription,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
 	Tooltip,
@@ -25,11 +47,22 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { useGetDocumentsQuery } from "@/lib/queries";
 import type { Document, Thread } from "@/lib/types";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CircleHelp, EllipsisVertical, Eye, Plus, Trash2 } from "lucide-react";
+import {
+	CircleHelp,
+	EllipsisVertical,
+	Eye,
+	Loader2,
+	Pen,
+	Plus,
+	Trash2,
+} from "lucide-react";
 import { CldUploadButton } from "next-cloudinary";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 interface SidebarProps {
 	setActiveDocument: (document?: Document) => void;
@@ -44,6 +77,9 @@ export default function Sidebar({
 }: SidebarProps) {
 	const [selectedDocumentForDeletion, setSelectedDocumentForDeletion] =
 		useState<Document | undefined>(undefined);
+	const [selectedThreadForRenaming, setSelectedThreadForRenaming] = useState<
+		Thread | undefined
+	>(undefined);
 
 	const router = useRouter();
 	const queryClient = useQueryClient();
@@ -106,6 +142,45 @@ export default function Sidebar({
 			});
 		},
 	});
+
+	const renameThreadMutation = useMutation({
+		mutationFn: async (name: string) => {
+			await fetch("/api/threads", {
+				method: "PUT",
+				body: JSON.stringify({ name, threadId: selectedThreadForRenaming?.id }),
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+		},
+		onSuccess: () => {
+			setSelectedThreadForRenaming(undefined);
+			queryClient.invalidateQueries({
+				queryKey: ["threads"],
+			});
+		},
+	});
+
+	const formSchema = z.object({
+		name: z.string().min(1).max(50),
+	});
+	const form = useForm<z.infer<typeof formSchema>>({
+		resolver: zodResolver(formSchema),
+		defaultValues: {
+			name: selectedThreadForRenaming?.name,
+		},
+	});
+
+	useEffect(() => {
+		if (selectedThreadForRenaming) {
+			form.clearErrors();
+			form.setValue("name", selectedThreadForRenaming.name);
+		}
+	}, [selectedThreadForRenaming, form]);
+
+	function onSubmit(values: z.infer<typeof formSchema>) {
+		renameThreadMutation.mutate(values.name);
+	}
 
 	return (
 		<div>
@@ -282,11 +357,67 @@ export default function Sidebar({
 										<Trash2 />
 										Delete
 									</DropdownMenuItem>
+									<DropdownMenuItem
+										onClick={(e) => {
+											e.stopPropagation();
+											setSelectedThreadForRenaming(thread);
+										}}
+									>
+										<Pen />
+										Rename
+									</DropdownMenuItem>
 								</DropdownMenuContent>
 							</DropdownMenu>
 						</Button>
 					</div>
 				))}
+
+				<Dialog
+					open={!!selectedThreadForRenaming}
+					onOpenChange={() => setSelectedThreadForRenaming(undefined)}
+				>
+					<DialogContent>
+						<DialogHeader>
+							<DialogTitle>
+								Rename {selectedThreadForRenaming?.name}
+							</DialogTitle>
+						</DialogHeader>
+						<Form {...form}>
+							<form
+								onSubmit={form.handleSubmit(onSubmit)}
+								className="space-y-8"
+							>
+								<FormField
+									control={form.control}
+									name="name"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Name</FormLabel>
+											<FormControl>
+												<Input
+													// defaultValue={selectedThreadForRenaming?.name}
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<DialogFooter>
+									<DialogClose asChild>
+										<Button variant="outline">Cancel</Button>
+									</DialogClose>
+									<Button type="submit">
+										Save changes
+										{renameThreadMutation.isPending && (
+											<Loader2 className="animate-spin" />
+										)}
+									</Button>
+								</DialogFooter>
+							</form>
+						</Form>
+					</DialogContent>
+				</Dialog>
 			</div>
 		</div>
 	);

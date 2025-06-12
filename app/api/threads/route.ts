@@ -49,3 +49,25 @@ export async function POST(request: Request) {
 
 	return Response.json({ result: "ok" });
 }
+
+export async function PUT(request: Request) {
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
+
+	const userId = session?.user.id;
+
+	if (!userId) {
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
+	}
+
+	const body = await request.json();
+	const { name, threadId } = body;
+
+	await db
+		.update(messageThreadTable)
+		.set({ name })
+		.where(eq(messageThreadTable.id, threadId));
+
+	return Response.json({ result: "ok" });
+}
