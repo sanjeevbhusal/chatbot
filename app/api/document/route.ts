@@ -47,9 +47,15 @@ export async function POST(request: Request) {
 	try {
 		uploadResult = await new Promise((resolve) => {
 			cloudinary.v2.uploader
-				.upload_stream({ resource_type: "raw" }, (error, result) => {
-					return resolve(result);
-				})
+				.upload_stream(
+					{
+						resource_type: "auto",
+						filename_override: file.name,
+					},
+					(error, result) => {
+						return resolve(result);
+					},
+				)
 				.end(buffer);
 		});
 
