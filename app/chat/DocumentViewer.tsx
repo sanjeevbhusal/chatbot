@@ -11,6 +11,7 @@ import { useGetDocumentsQuery } from "@/lib/queries";
 import type { Document } from "@/lib/types";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import clsx from "clsx";
+import { File } from "lucide-react";
 import { useEffect } from "react";
 
 interface DocumentViewerProps {
@@ -68,19 +69,23 @@ export default function DocumentViewer({
 
 	return (
 		<Dialog open={!!activeDocument} onOpenChange={onClose}>
-			<DialogContent className="w-[80%] h-[90%]" style={{ maxWidth: "none" }}>
+			<DialogContent
+				className="w-[80%] h-[90%] pl-2"
+				style={{ maxWidth: "none" }}
+			>
 				<div className="flex gap-2 h-full">
 					<div className="flex flex-col gap-2 basis-40 shrink-0">
 						{documents.map((document) => (
 							<div className={"flex gap-4 items-center"} key={document.id}>
 								<Button
-									variant="link"
-									className={clsx("p-0 font-semibold", {
-										"text-blue-500": document.id === activeDocument?.id,
+									variant="ghost"
+									className={clsx("w-full justify-start cursor-pointer", {
+										"bg-accent": document.id === activeDocument?.id,
 									})}
 									onClick={() => onSelectDocument(document)}
 								>
-									{document.name}
+									<File />
+									<span>{document.name}</span>
 								</Button>
 							</div>
 						))}

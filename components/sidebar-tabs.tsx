@@ -232,7 +232,7 @@ export default function SidebarTabs({
 										</SidebarMenuItem>
 									))
 								) : (
-									<p className=" text-slate-600">No Chats Created</p>
+									<p className="px-2 text-slate-600">No Chats Created</p>
 								)}
 							</SidebarMenu>
 						</TabsContent>
@@ -254,7 +254,7 @@ export default function SidebarTabs({
 
 											<DropdownMenu>
 												<DropdownMenuTrigger asChild>
-													<SidebarMenuAction>
+													<SidebarMenuAction showOnHover>
 														<Ellipsis />
 													</SidebarMenuAction>
 												</DropdownMenuTrigger>
@@ -295,7 +295,7 @@ export default function SidebarTabs({
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Rename {selectedThreadForRenaming?.name}</DialogTitle>
+						<DialogTitle>Rename Chat</DialogTitle>
 					</DialogHeader>
 					<Form {...form}>
 						<form

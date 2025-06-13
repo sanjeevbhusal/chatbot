@@ -352,7 +352,7 @@ export default function Sidebar({
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Rename {selectedThreadForRenaming?.name}</DialogTitle>
+						<DialogTitle>Rename </DialogTitle>
 					</DialogHeader>
 					<Form {...form}>
 						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

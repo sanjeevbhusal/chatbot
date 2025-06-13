@@ -16,6 +16,7 @@ import { useGetDocumentsQuery } from "@/lib/queries";
 import type { Document, Message } from "@/lib/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import UploadFileModal from "./UploadFileModal";
@@ -86,6 +87,16 @@ export default function NewChatWindow({
 		},
 	});
 
+	const logoutMutation = useMutation({
+		mutationFn: async () => {
+			await authClient.signOut({
+				fetchOptions: {
+					onSuccess: () => router.push("/sign-in"),
+				},
+			});
+		},
+	});
+
 	const getAnswer = async (question: string) => {
 		setMessages((messages) => [
 			...messages,
@@ -124,9 +135,6 @@ export default function NewChatWindow({
 		}
 	}, [getDocumentsQuery.data, getDocumentsQuery.isFetching]);
 
-	const documentsQuery = useGetDocumentsQuery();
-	const documents = documentsQuery.data ?? [];
-
 	useEffect(() => {
 		const lastMessage = messages[messages.length - 1];
 		if (lastMessage) {
@@ -135,6 +143,9 @@ export default function NewChatWindow({
 				?.scrollIntoView({ behavior: "instant" });
 		}
 	}, [messages]);
+
+	const documentsQuery = useGetDocumentsQuery();
+	const documents = documentsQuery.data ?? [];
 
 	const renderAvatarName = (name: string) => {
 		if (!name) return "";
@@ -178,15 +189,15 @@ export default function NewChatWindow({
 						</DropdownMenuTrigger>
 						<DropdownMenuContent side="bottom" align="end">
 							<DropdownMenuItem
-								onClick={async () => {
-									await authClient.signOut({
-										fetchOptions: {
-											onSuccess: () => router.push("/sign-in"),
-										},
-									});
+								onClick={(e) => {
+									e.preventDefault();
+									logoutMutation.mutate();
 								}}
 							>
-								Logout
+								Logout{" "}
+								{logoutMutation.isPending && (
+									<Loader2 className="animate-spin" />
+								)}
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
@@ -202,9 +213,13 @@ export default function NewChatWindow({
 					return (
 						<div
 							className={clsx(
-								"px-4 mb-8",
+								"px-12 mb-8",
 								{ "mt-10": index === 0 },
-								{ "mb-10": index === messages.length - 1 },
+								{
+									"mb-10":
+										index === messages.length - 1 &&
+										!getAnswerMutation.isPending,
+								},
 							)}
 							id={message.id.toString()}
 							key={message.id}
@@ -265,7 +280,7 @@ export default function NewChatWindow({
 				})}
 
 				{getAnswerMutation.isPending && (
-					<p className="text-xl flex gap-2 items-center px-4 mt-4">
+					<p className="text-xl flex gap-2 items-center px-12 mb-12">
 						<div className="flex items-center space-x-3 text-gray-600 text-sm">
 							<div className="flex h-full items-center space-x-1">
 								<div className="h-5 animate-bounce  animation-delay-200">
@@ -287,11 +302,11 @@ export default function NewChatWindow({
 			{messages.length === 0 ? (
 				<div className="w-full flex items-center gap-8 flex-col">
 					<div className="text-2xl">
-						Ask me any questions against the documents you have uploaded
+						Ask any questions against the documents uploaded
 					</div>
 					<Textarea
-						placeholder="Ask any question"
-						className="text-lg! p-4 mx-4 basis-[100px] grow-0 shrink-0 border rounded-lg w-[80%]"
+						placeholder="What do you want to know?"
+						className="text-lg! p-4 mx-4 basis-[100px] grow-0 shrink-0 border rounded-lg w-[70%]"
 						onKeyUp={(e) => {
 							if (e.key === "Enter") {
 								getAnswer(e.currentTarget.value);
@@ -304,7 +319,7 @@ export default function NewChatWindow({
 			) : (
 				<Textarea
 					placeholder="Ask any question"
-					className="text-lg! p-4 mx-4 basis-[100px] grow-0 shrink-0 border rounded-lg mb-8 w-[calc(100%-32px)]"
+					className="text-lg! mb-8 basis-[100px] grow-0 shrink-0 border rounded-lg w-[calc(100%-96px)] mx-auto"
 					onKeyUp={(e) => {
 						if (e.key === "Enter") {
 							getAnswer(e.currentTarget.value);
