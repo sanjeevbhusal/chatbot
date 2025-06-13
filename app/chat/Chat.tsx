@@ -1,10 +1,10 @@
 "use client";
 
 import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import type { Document, Thread } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { parseAsInteger, useQueryState } from "nuqs";
+import { useState } from "react";
 import DocumentViewer from "./DocumentViewer";
 import NewChatWindow from "./NewChatWindow";
 
@@ -14,9 +14,11 @@ export default function Chat() {
 		useState<number>();
 	const [activeDocumentToLineNo, setActiveDocumentToLineNo] =
 		useState<number>();
-	const [activeThread, setActiveThread] = useState<Thread>();
 
-	const [activeThreadToSet, setActiveThreadToSet] = useState<number>();
+	const [activeChatId, setActiveChatId] = useQueryState(
+		"activeChatId",
+		parseAsInteger,
+	);
 
 	const useGetThreadsQuery = useQuery({
 		queryKey: ["threads"],
@@ -27,27 +29,16 @@ export default function Chat() {
 		},
 	});
 
-	useEffect(() => {
-		if (useGetThreadsQuery?.data) {
-			if (activeThreadToSet) {
-				const activeThread = useGetThreadsQuery.data.find(
-					(thread) => thread.id === activeThreadToSet,
-				);
-				if (activeThread) {
-					setActiveThread(activeThread);
-					setActiveThreadToSet(undefined);
-				}
-			}
-		}
-	}, [useGetThreadsQuery?.data, activeThreadToSet]);
+	const activeThread = activeChatId
+		? useGetThreadsQuery.data?.find((t) => t.id === activeChatId)
+		: undefined;
 
 	return (
 		<div className="h-screen py-0 w-full flex ">
 			<AppSidebar
 				activeThread={activeThread}
-				setActiveThread={setActiveThread}
 				setActiveDocument={setActiveDocument}
-				setActiveThreadToSet={setActiveThreadToSet}
+				setActiveThreadId={setActiveChatId}
 			/>
 
 			<div className="flex-grow h-full relative flex flex-col gap-12">
@@ -61,8 +52,8 @@ export default function Chat() {
 						setActiveDocumentFromLineNo(fromLineNo);
 						setActiveDocumentToLineNo(toLineNumber);
 					}}
-					activeThread={activeThread}
-					setThreadId={(id) => setActiveThreadToSet(id)}
+					activeThreadId={activeChatId}
+					setActiveThreadId={setActiveChatId}
 				/>
 			</div>
 

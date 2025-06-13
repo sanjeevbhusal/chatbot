@@ -17,16 +17,14 @@ import type { Document } from "@/lib/types";
 
 interface AppSidebarProps {
 	activeThread?: Thread;
-	setActiveThread: (thread?: Thread) => void;
 	setActiveDocument: (document?: Document) => void;
-	setActiveThreadToSet: (threadId?: number) => void;
+	setActiveThreadId: (threadId: number | null) => void;
 }
 
 export function AppSidebar({
 	activeThread,
-	setActiveThread,
 	setActiveDocument,
-	setActiveThreadToSet,
+	setActiveThreadId,
 }: AppSidebarProps) {
 	const [isUploadFileModalOpen, setIsUploadFileModalOpen] = useState(false);
 
@@ -38,7 +36,9 @@ export function AppSidebar({
 						<SidebarMenuItem>
 							<SidebarMenuButton
 								className="cursor-pointer"
-								onClick={() => setActiveThread(undefined)}
+								onClick={() => {
+									setActiveThreadId(null);
+								}}
 							>
 								<Plus /> New Chat
 							</SidebarMenuButton>
@@ -56,9 +56,8 @@ export function AppSidebar({
 
 				<SidebarTabs
 					setActiveDocument={setActiveDocument}
-					setActiveThread={setActiveThread}
-					activeThread={activeThread}
-					setActiveThreadToSet={setActiveThreadToSet}
+					activeThreadId={activeThread?.id}
+					setActiveThreadId={setActiveThreadId}
 				/>
 			</Sidebar>
 

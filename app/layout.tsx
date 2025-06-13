@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import Providers from "../lib/providers";
 
 const geistSans = Geist({
@@ -33,7 +34,7 @@ export default function RootLayout({
 			>
 				<Providers>
 					<SidebarProvider>
-						{children}
+						<NuqsAdapter>{children}</NuqsAdapter>
 						<Toaster richColors />
 					</SidebarProvider>
 				</Providers>

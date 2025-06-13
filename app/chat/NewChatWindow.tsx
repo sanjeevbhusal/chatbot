@@ -13,17 +13,11 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
 import { useGetDocumentsQuery } from "@/lib/queries";
-import type { Document, Message, Thread } from "@/lib/types";
-import {
-	QueryClient,
-	useMutation,
-	useQuery,
-	useQueryClient,
-} from "@tanstack/react-query";
+import type { Document, Message } from "@/lib/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
-import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 interface ChatWindowProps {
 	onSelectDocument: (
@@ -31,67 +25,58 @@ interface ChatWindowProps {
 		fromLineNo: number,
 		toLineNo: number,
 	) => void;
-	activeThread?: Thread;
-	setThreadId: (threadId?: number) => void;
+	activeThreadId: number | null;
+	setActiveThreadId: (threadId: number | null) => void;
 }
 
 export default function NewChatWindow({
 	onSelectDocument,
-	activeThread,
-	setThreadId,
+	activeThreadId,
+	setActiveThreadId,
 }: ChatWindowProps) {
-	// If messages array is empty, treat the conversation like a new conversation. The search box should be at the middle etc.
-	// Once user submits the message, the message is appended to messages array. Now, treat the conversation like an existing conversation. We will still not have thread id though.
-	// Once the reply comes in, invalidate the threads endpoint. You will refetch the threads. Newly created thread will be displayed in the side bar. Select that thread as an active thread. You don't need to do any sor of routing at all.
-
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [isReplyPending, setIsReplyPending] = useState(false);
+
 	const { data: session } = authClient.useSession();
+	const queryClient = useQueryClient();
 	const router = useRouter();
 
-	// If user decides on a new chat, clear the message history.
-	useEffect(() => {
-		if (!activeThread) {
-			setMessages([]);
-		}
-	}, [activeThread]);
-
 	const initialMessagesQuery = useQuery({
-		queryKey: ["messages", activeThread?.id],
+		queryKey: ["messages", activeThreadId],
 		queryFn: async () => {
-			const response = await fetch(`/api/answer?threadId=${activeThread?.id}`);
+			const response = await fetch(`/api/answer?threadId=${activeThreadId}`);
 			const data = await response.json();
 			return data.result as Message[];
 		},
-		enabled: !!activeThread,
+		// only fetch the messages if there is a active thread and no messages have been sent
+		enabled: !!activeThreadId,
 	});
 
 	useEffect(() => {
-		return () => {
+		if (!activeThreadId) {
 			setMessages([]);
-		};
-	}, []);
+		}
+	}, [activeThreadId]);
 
+	// Populate messages for this thread
 	useEffect(() => {
 		if (initialMessagesQuery?.data) {
 			setMessages(initialMessagesQuery.data);
 		}
 	}, [initialMessagesQuery?.data]);
 
-	const queryClient = useQueryClient();
-
 	const getAnswerMutation = useMutation({
 		mutationFn: async (question: string) => {
 			const response = await fetch("/api/answer", {
 				method: "POST",
-				body: JSON.stringify({ question, threadId: activeThread?.id }),
+				body: JSON.stringify({ question, threadId: activeThreadId }),
 				headers: {
 					"Content-Type": "application/json",
 				},
 			});
 			const data = await response.json();
 			const message = data.result as Message;
-			setThreadId(message.threadId);
+			setActiveThreadId(message.threadId ?? null);
 			return message;
 		},
 		onSuccess: (data) => {

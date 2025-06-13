@@ -13,7 +13,6 @@ import {
 	Pen,
 	Trash2,
 } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
@@ -42,14 +41,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "./ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
 import { Input } from "./ui/input";
 import {
 	SidebarContent,
@@ -62,16 +54,15 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 interface SidebarTabsProps {
-	activeThread?: Thread;
-	setActiveThread: (thread?: Thread) => void;
+	activeThreadId?: number;
+	setActiveThreadId: (threadId: number | null) => void;
 	setActiveDocument: (document?: Document) => void;
-	setActiveThreadToSet: (threadId: number) => void;
 }
 
 export default function SidebarTabs({
-	setActiveThread,
 	setActiveDocument,
-	setActiveThreadToSet,
+	setActiveThreadId,
+	activeThreadId,
 }: SidebarTabsProps) {
 	const [selectedThreadForRenaming, setSelectedThreadForRenaming] = useState<
 		Thread | undefined
@@ -81,10 +72,6 @@ export default function SidebarTabs({
 	>(undefined);
 	const [selectedDocumentForDeletion, setSelectedDocumentForDeletion] =
 		useState<Document | undefined>(undefined);
-
-	const searchParams = useSearchParams();
-	const router = useRouter();
-	const pathName = usePathname();
 
 	const formSchema = z.object({
 		name: z.string().min(1).max(50),
@@ -147,13 +134,9 @@ export default function SidebarTabs({
 
 			// move to next thread
 			if (threads[nextIndex]) {
-				const params = new URLSearchParams(searchParams.toString());
-				params.set("activeChat", threads[nextIndex].id.toString());
-				router.push(`${pathName}?${params.toString()}`);
+				setActiveThreadId(threads[nextIndex].id);
 			} else {
-				const params = new URLSearchParams(searchParams.toString());
-				params.delete("activeChat");
-				router.push(`${pathName}?${params.toString()}`);
+				setActiveThreadId(null);
 			}
 		},
 	});
@@ -188,21 +171,6 @@ export default function SidebarTabs({
 	const documents = documentsQuery.data ?? [];
 	const threads = useGetThreadsQuery?.data ?? [];
 
-	const activeChatId = searchParams.get("activeChat")
-		? Number(searchParams.get("activeChat"))
-		: undefined;
-
-	useEffect(() => {
-		if (activeChatId) {
-			const thread = threads.find((thread) => thread.id === activeChatId);
-			if (thread) {
-				setActiveThread(thread);
-			}
-		} else {
-			setActiveThread(undefined);
-		}
-	}, [threads, activeChatId, setActiveThread]);
-
 	return (
 		<>
 			<Tabs defaultValue="chats" className="flex min-h-0 flex-1">
@@ -222,16 +190,12 @@ export default function SidebarTabs({
 										<SidebarMenuItem
 											key={thread.id}
 											onClick={() => {
-												const params = new URLSearchParams(
-													searchParams.toString(),
-												);
-												params.set("activeChat", thread.id.toString());
-												router.push(`${pathName}?${params.toString()}`);
+												setActiveThreadId(thread.id);
 											}}
 										>
 											<SidebarMenuButton
 												className="cursor-pointer"
-												isActive={thread.id === activeChatId}
+												isActive={thread.id === activeThreadId}
 											>
 												<MessageCircle />
 												<span>{thread.name}</span>
