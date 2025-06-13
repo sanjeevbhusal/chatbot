@@ -17,7 +17,8 @@ import type { Document, Message } from "@/lib/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import UploadFileModal from "./UploadFileModal";
 
 interface ChatWindowProps {
 	onSelectDocument: (
@@ -35,11 +36,13 @@ export default function NewChatWindow({
 	setActiveThreadId,
 }: ChatWindowProps) {
 	const [messages, setMessages] = useState<Message[]>([]);
-	const [isReplyPending, setIsReplyPending] = useState(false);
-
+	const [isNoDocumentExistsModalOpen, setIsNoDocumentExistsModalOpen] =
+		useState(false);
 	const { data: session } = authClient.useSession();
 	const queryClient = useQueryClient();
 	const router = useRouter();
+
+	const getDocumentsQuery = useGetDocumentsQuery();
 
 	const initialMessagesQuery = useQuery({
 		queryKey: ["messages", activeThreadId],
@@ -51,19 +54,6 @@ export default function NewChatWindow({
 		// only fetch the messages if there is a active thread and no messages have been sent
 		enabled: !!activeThreadId,
 	});
-
-	useEffect(() => {
-		if (!activeThreadId) {
-			setMessages([]);
-		}
-	}, [activeThreadId]);
-
-	// Populate messages for this thread
-	useEffect(() => {
-		if (initialMessagesQuery?.data) {
-			setMessages(initialMessagesQuery.data);
-		}
-	}, [initialMessagesQuery?.data]);
 
 	const getAnswerMutation = useMutation({
 		mutationFn: async (question: string) => {
@@ -94,9 +84,6 @@ export default function NewChatWindow({
 				queryKey: ["threads"],
 			});
 		},
-		onSettled: () => {
-			setIsReplyPending(false);
-		},
 	});
 
 	const getAnswer = async (question: string) => {
@@ -109,10 +96,33 @@ export default function NewChatWindow({
 				sources: [],
 			},
 		]);
-		setIsReplyPending(true);
 
 		getAnswerMutation.mutate(question);
 	};
+
+	useEffect(() => {
+		if (!activeThreadId) {
+			setMessages([]);
+		}
+	}, [activeThreadId]);
+
+	// Populate messages for this thread
+	useEffect(() => {
+		if (initialMessagesQuery?.data) {
+			setMessages(initialMessagesQuery.data);
+		}
+	}, [initialMessagesQuery?.data]);
+
+	// set the flag to true if no documents exist.
+	useEffect(() => {
+		if (
+			getDocumentsQuery.data &&
+			getDocumentsQuery.data.length === 0 &&
+			!getDocumentsQuery.isFetching
+		) {
+			setIsNoDocumentExistsModalOpen(true);
+		}
+	}, [getDocumentsQuery.data, getDocumentsQuery.isFetching]);
 
 	const documentsQuery = useGetDocumentsQuery();
 	const documents = documentsQuery.data ?? [];
@@ -125,15 +135,6 @@ export default function NewChatWindow({
 				?.scrollIntoView({ behavior: "instant" });
 		}
 	}, [messages]);
-
-	const hasInitialMessagesLoaded = initialMessagesQuery.status === "success";
-
-	const newWindowBehaviour = messages.length === 0;
-
-	// <div className="flex flex-col items-center gap-2 text-2xl">
-	// 	<span>Loading Messages ...</span>
-	// 	<Loader2 className="animate-spin" />
-	// </div>;
 
 	const renderAvatarName = (name: string) => {
 		if (!name) return "";
@@ -263,7 +264,7 @@ export default function NewChatWindow({
 					);
 				})}
 
-				{isReplyPending && (
+				{getAnswerMutation.isPending && (
 					<p className="text-xl flex gap-2 items-center px-4 mt-4">
 						<div className="flex items-center space-x-3 text-gray-600 text-sm">
 							<div className="flex h-full items-center space-x-1">
@@ -283,41 +284,41 @@ export default function NewChatWindow({
 				)}
 			</div>
 
-			{messages.length === 0 && (
+			{messages.length === 0 ? (
 				<div className="w-full flex items-center gap-8 flex-col">
 					<div className="text-2xl">
 						Ask me any questions against the documents you have uploaded
 					</div>
 					<Textarea
 						placeholder="Ask any question"
-						className="w-[80%] mx-4 basis-[100px] grow-0 shrink-0 border rounded-lg px-6 py-4 disabled:text-black disabled:opacity-100 disabled:text-lg placeholder:text-lg not-[disabled]:text-lg"
+						className="text-lg! p-4 mx-4 basis-[100px] grow-0 shrink-0 border rounded-lg w-[80%]"
 						onKeyUp={(e) => {
 							if (e.key === "Enter") {
 								getAnswer(e.currentTarget.value);
 								e.currentTarget.value = "";
 							}
 						}}
+						disabled={getAnswerMutation.isPending}
 					/>
 				</div>
-			)}
-
-			{!newWindowBehaviour && (
+			) : (
 				<Textarea
 					placeholder="Ask any question"
-					className="text-lg! p-4 mx-4 w-[calc(100%-32px)] basis-[100px] grow-0 shrink-0 border rounded-lg mb-8"
+					className="text-lg! p-4 mx-4 basis-[100px] grow-0 shrink-0 border rounded-lg mb-8 w-[calc(100%-32px)]"
 					onKeyUp={(e) => {
 						if (e.key === "Enter") {
 							getAnswer(e.currentTarget.value);
 							e.currentTarget.value = "";
 						}
 					}}
-					disabled={
-						isReplyPending ||
-						documents.length === 0 ||
-						!hasInitialMessagesLoaded
-					}
+					disabled={getAnswerMutation.isPending}
 				/>
 			)}
+
+			<UploadFileModal
+				open={isNoDocumentExistsModalOpen}
+				onSuccess={() => setIsNoDocumentExistsModalOpen(false)}
+			/>
 		</div>
 	);
 }

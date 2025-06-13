@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
-import { Alert, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
 	Dialog,
 	DialogClose,
@@ -13,6 +13,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { useGetDocumentsQuery } from "@/lib/queries";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -76,13 +77,16 @@ function UploadFile({ onUpload }: UploadFileProps) {
 
 interface UploadFileModalProps {
 	open: boolean;
-	onOpenChange: (value: boolean) => void;
+	onOpenChange?: (value: boolean) => void;
+	onSuccess?: () => void;
 }
 
 export default function UploadFileModal({
 	open,
 	onOpenChange,
+	onSuccess,
 }: UploadFileModalProps) {
+	const documentsQuery = useGetDocumentsQuery();
 	const [file, setFile] = useState<File>();
 	const queryClient = useQueryClient();
 
@@ -102,7 +106,8 @@ export default function UploadFileModal({
 			queryClient.invalidateQueries({
 				queryKey: ["documents"],
 			});
-			onOpenChange(false);
+			onOpenChange?.(false);
+			onSuccess?.();
 
 			toast.success("Document has been added to the source", {
 				position: "top-center",
@@ -110,17 +115,22 @@ export default function UploadFileModal({
 		},
 	});
 
+	const displayAlert =
+		documentsQuery.data &&
+		documentsQuery.data.length === 0 &&
+		!documentsQuery.isFetching;
+
 	return (
 		<Dialog
 			open={open}
 			onOpenChange={() => {
 				if (uploadSourceMutation.isPending) return;
-				onOpenChange(!open);
+				onOpenChange?.(!open);
 				setFile(undefined);
 			}}
 		>
 			<DialogContent
-				className="sm:max-w-[425px]"
+				className="w-[600px]"
 				disableCloseButton={uploadSourceMutation.isPending}
 			>
 				<DialogHeader>
@@ -129,6 +139,18 @@ export default function UploadFileModal({
 						Upload a file to add it to your sources.
 					</DialogDescription>
 				</DialogHeader>
+
+				{displayAlert && (
+					<Alert variant="destructive" className="mt-2">
+						<AlertCircleIcon />
+						<AlertTitle>No Documents Available.</AlertTitle>
+						<AlertDescription>
+							You need to upload atleast 1 document to interact with the
+							application
+						</AlertDescription>
+					</Alert>
+				)}
+
 				<UploadFile onUpload={(file) => setFile(file)} />
 
 				{file && (
