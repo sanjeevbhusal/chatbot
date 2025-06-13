@@ -1,12 +1,12 @@
 "use client";
 
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import type { Document, Thread } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import ChatWindow from "./ChatWindow";
 import DocumentViewer from "./DocumentViewer";
 import NewChatWindow from "./NewChatWindow";
-import Sidebar from "./Sidebar";
 
 export default function Chat() {
 	const [activeDocument, setActiveDocument] = useState<Document>();
@@ -41,33 +41,16 @@ export default function Chat() {
 		}
 	}, [useGetThreadsQuery?.data, activeThreadToSet]);
 
-	const threads = useGetThreadsQuery?.data ?? [];
-
 	return (
-		<div className="h-screen py-0 w-full flex">
-			<div className="w-[20%] h-full relative">
-				<Sidebar
-					activeThread={activeThread}
-					setActiveDocument={setActiveDocument}
-					setActiveThread={setActiveThread}
-					setActiveThreadToSet={setActiveThreadToSet}
-					threads={threads}
-				/>
-			</div>
+		<div className="h-screen py-0 w-full flex ">
+			<AppSidebar
+				activeThread={activeThread}
+				setActiveThread={setActiveThread}
+				setActiveDocument={setActiveDocument}
+				setActiveThreadToSet={setActiveThreadToSet}
+			/>
 
-			<div className="w-[80%] h-full border border-t-0 relative flex flex-col gap-12">
-				{/* <ChatWindow
-					onSelectDocument={(
-						document: Document,
-						fromLineNo: number,
-						toLineNumber: number,
-					) => {
-						setActiveDocument(document);
-						setActiveDocumentFromLineNo(fromLineNo);
-						setActiveDocumentToLineNo(toLineNumber);
-					}}
-					activeThread={activeThread}
-				/> */}
+			<div className="flex-grow h-full relative flex flex-col gap-12">
 				<NewChatWindow
 					onSelectDocument={(
 						document: Document,

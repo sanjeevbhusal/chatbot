@@ -63,6 +63,19 @@ interface SidebarProps {
 	setActiveThreadToSet: (threadId?: number) => void;
 }
 
+/**
+ * The sidebar component for the chat application.
+ *
+ * This component displays a list of threads and sources on the left side of the
+ * screen. It allows the user to select a thread or source, and to create a new
+ * thread or source.
+ *
+ * @param {function} setActiveDocument - A function to call when the user selects a new document.
+ * @param {function} setActiveThread - A function to call when the user selects a new thread.
+ * @param {Thread[]} threads - An array of threads.
+ * @param {Thread|undefined} activeThread - The currently active thread.
+ * @param {function} setActiveThreadToSet - A function to call when the user wants to set a new thread.
+ */
 export default function Sidebar({
 	setActiveDocument,
 	setActiveThread,

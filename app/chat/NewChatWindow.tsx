@@ -7,7 +7,10 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip } from "@/components/ui/tooltip";
+import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
 import { useGetDocumentsQuery } from "@/lib/queries";
 import type { Document, Message, Thread } from "@/lib/types";
@@ -147,26 +150,47 @@ export default function NewChatWindow({
 	// 	<Loader2 className="animate-spin" />
 	// </div>;
 
+	const renderAvatarName = (name: string) => {
+		if (!name) return "";
+
+		const splits = name.split(" ");
+		const firstCharacter = splits[0].charAt(0);
+		const secondCharacter =
+			splits.length === 1 ? splits[0].charAt(1) : splits[1].charAt(0);
+		return firstCharacter.toUpperCase() + secondCharacter.toUpperCase();
+	};
+
 	return (
 		<div className="h-full flex flex-col">
 			<div className="basis-[50px] grow-0 shrink-0 border-b px-4 py-2 flex justify-between items-center bg-white">
-				<span className="text-xl font-bold">
-					{activeThread?.name ?? "ChatBot"}
-				</span>
+				<div className="flex items-center gap-2">
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<SidebarTrigger />
+						</TooltipTrigger>
+						<TooltipContent>
+							<span>Toggle Sidebar</span>
+						</TooltipContent>
+					</Tooltip>
+
+					<span className="font-medium">ChatBot</span>
+				</div>
 				<div>
 					{" "}
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild className="w-fit ml-auto">
-							<Avatar>
+							<Avatar className="cursor-pointer">
 								<AvatarImage
 									src={session?.user.image ?? ""}
 									className="h-8 w-8 rounded-full"
 									alt={session?.user.name ?? ""}
 								/>
-								<AvatarFallback>{session?.user.name}</AvatarFallback>
+								<AvatarFallback className="h-8 w-8">
+									{renderAvatarName(session?.user.name ?? "")}
+								</AvatarFallback>
 							</Avatar>
 						</DropdownMenuTrigger>
-						<DropdownMenuContent side="top">
+						<DropdownMenuContent side="bottom" align="end">
 							<DropdownMenuItem
 								onClick={async () => {
 									await authClient.signOut({
@@ -280,11 +304,7 @@ export default function NewChatWindow({
 						Ask me any questions against the documents you have uploaded
 					</div>
 					<Textarea
-						placeholder={
-							documentsQuery.status === "success" && documents.length === 0
-								? "Please add at least 1 source before asking questions"
-								: "Type your message here..."
-						}
+						placeholder="Ask any question"
 						className="w-[80%] mx-4 basis-[100px] grow-0 shrink-0 border rounded-lg px-6 py-4 disabled:text-black disabled:opacity-100 disabled:text-lg placeholder:text-lg not-[disabled]:text-lg"
 						onKeyUp={(e) => {
 							if (e.key === "Enter") {
@@ -292,23 +312,14 @@ export default function NewChatWindow({
 								e.currentTarget.value = "";
 							}
 						}}
-						// disabled={
-						// 	isReplyPending ||
-						// 	documents.length === 0 ||
-						// 	!hasInitialMessagesLoaded
-						// }
 					/>
 				</div>
 			)}
 
 			{!newWindowBehaviour && (
 				<Textarea
-					placeholder={
-						documentsQuery.status === "success" && documents.length === 0
-							? "Please add at least 1 source before asking questions"
-							: "Type your message here..."
-					}
-					className="mx-4 w-[calc(100%-32px)] basis-[100px] grow-0 shrink-0 border rounded-lg p-2 disabled:text-black disabled:opacity-100 disabled:text-lg mb-8"
+					placeholder="Ask any question"
+					className="text-lg! p-4 mx-4 w-[calc(100%-32px)] basis-[100px] grow-0 shrink-0 border rounded-lg mb-8"
 					onKeyUp={(e) => {
 						if (e.key === "Enter") {
 							getAnswer(e.currentTarget.value);

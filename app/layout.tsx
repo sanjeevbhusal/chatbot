@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import Providers from "../lib/providers";
 
@@ -30,8 +32,10 @@ export default function RootLayout({
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
 				<Providers>
-					{children}
-					<Toaster richColors />
+					<SidebarProvider>
+						{children}
+						<Toaster richColors />
+					</SidebarProvider>
 				</Providers>
 			</body>
 		</html>
