@@ -4,7 +4,7 @@ export interface Message {
 	role: "user" | "assistant";
 	threadId?: number;
 	sources: {
-		id: number;
+		name: string;
 		userDocumentId: number;
 		linesFrom: number;
 		linesTo: number;

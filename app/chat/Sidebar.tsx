@@ -82,10 +82,6 @@ export default function Sidebar({
 	const documentsQuery = useGetDocumentsQuery();
 	const documents = documentsQuery.data ?? [];
 
-	const [currentlyHoveredChat, setCurrentHoveredChat] = useState<
-		Thread | undefined
-	>(undefined);
-
 	const deleteDocumentMutation = useMutation({
 		mutationFn: async (documentId: number) => {
 			const response = await fetch("/api/document", {
@@ -221,10 +217,7 @@ export default function Sidebar({
 										buttonVariants({
 											variant: "ghost",
 											className: clsx(
-												"w-full justify-between cursor-pointer px-2",
-												{
-													"bg-accent": currentlyHoveredChat?.id === thread.id,
-												},
+												"w-full justify-between cursor-pointer px-2 group",
 												{
 													"bg-[#d1d2d1] hover:bg-[#d1d2d1]":
 														activeThread?.id === thread.id,
@@ -238,27 +231,19 @@ export default function Sidebar({
 											setActiveThread(thread);
 										}
 									}}
-									onMouseEnter={() => {
-										setCurrentHoveredChat(thread);
-									}}
-									// onMouseLeave={() => {
-									// 	setCurrentHoveredChat(undefined);
-									// }}
 								>
 									<p>{thread.name}</p>
-									<DropdownMenu modal={true}>
-										<DropdownMenuTrigger
-											className={clsx("cursor-pointer opacity-0", {
-												"opacity-100": thread.id === currentlyHoveredChat?.id,
-											})}
-										>
+									<DropdownMenu
+										onOpenChange={(open) => {
+											if (open) {
+												setActiveThread(thread);
+											}
+										}}
+									>
+										<DropdownMenuTrigger className="cursor-pointer opacity-0 group-hover:opacity-100">
 											<Ellipsis />
 										</DropdownMenuTrigger>
-										<DropdownMenuContent
-											onCloseAutoFocus={() => {
-												setCurrentHoveredChat(undefined);
-											}}
-										>
+										<DropdownMenuContent>
 											<DropdownMenuItem
 												variant="destructive"
 												onClick={(e) => {
@@ -296,12 +281,13 @@ export default function Sidebar({
 							<div className="flex flex-col gap-4">
 								{documents.map((document) => (
 									<div className="flex gap-4 items-center" key={document.id}>
-										<Button
+										<div
 											className={cn(
 												buttonVariants({
-													variant: "secondary",
-													size: "sm",
-													className: "w-full justify-between cursor-pointer",
+													variant: "ghost",
+													className: clsx(
+														"w-full justify-between cursor-pointer px-2",
+													),
 												}),
 											)}
 											onClick={() => setActiveDocument(document)}
@@ -338,7 +324,7 @@ export default function Sidebar({
 													</DropdownMenuItem>
 												</DropdownMenuContent>
 											</DropdownMenu>
-										</Button>
+										</div>
 									</div>
 								))}
 							</div>

@@ -217,7 +217,7 @@ export default function NewChatWindow({
 													return (
 														<div
 															className="flex gap-4 items-center"
-															key={source.id}
+															key={`${message.id}-${source.linesFrom}-${source.linesTo}`}
 														>
 															<Button
 																variant="link"
