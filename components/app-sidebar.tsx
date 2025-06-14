@@ -46,7 +46,7 @@ export function AppSidebar({
 						</div>
 						<Tooltip>
 							<TooltipTrigger asChild>
-								<SidebarTrigger />
+								<SidebarTrigger className="cursor-pointer" />
 							</TooltipTrigger>
 							<TooltipContent side={sidebarState.open ? "bottom" : "right"}>
 								<span>Toggle Sidebar</span>

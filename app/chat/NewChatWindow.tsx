@@ -9,8 +9,11 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
-import { Tooltip } from "@/components/ui/tooltip";
-import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
 import { useGetDocumentsQuery } from "@/lib/queries";
 import type { Document, Message } from "@/lib/types";
@@ -170,19 +173,25 @@ export default function NewChatWindow({
 		<div className="h-full flex flex-col">
 			<div
 				className={clsx(
-					"basis-[50px] grow-0 shrink-0 border-b px-4 py-2 flex justify-between items-center bg-white",
-					{
-						"justify-end": sidebar.open,
-					},
+					"basis-[50px] grow-0 shrink-0 border-b px-4 py-2 flex items-center bg-white justify-between md:justify-end",
 				)}
 			>
-				{!sidebar.open && (
-					<div className="h-10 w-32 relative">
-						<Image src="/logo.svg" alt="logo" fill />
-					</div>
-				)}
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<SidebarTrigger className="flex md:hidden cursor-pointer" />
+					</TooltipTrigger>
+
+					<TooltipContent>
+						<span>Toggle Sidebar</span>
+					</TooltipContent>
+				</Tooltip>
+
+				<div className="h-8 w-32 relative block md:hidden">
+					<Image src="/logo.svg" alt="logo" fill />
+				</div>
+
 				<DropdownMenu>
-					<DropdownMenuTrigger asChild className="w-fit ml-auto">
+					<DropdownMenuTrigger asChild className="w-fit">
 						<Avatar className="cursor-pointer">
 							<AvatarImage
 								src={session?.user.image ?? ""}
@@ -304,14 +313,11 @@ export default function NewChatWindow({
 			</div>
 
 			{messages.length === 0 ? (
-				<div className="w-full flex items-center gap-8 flex-col">
+				<div className="w-full flex items-center gap-8 flex-col px-8 text-center">
 					<div className="text-2xl">
 						Ask any questions against the documents uploaded
 					</div>
-					<div className="basis-[120px] grow-0 shrink-0 w-[70%]">
-						<p className="w-full text-gray-500 text-end text-sm">
-							{selectedDocumentIds.length} documents
-						</p>
+					<div className="basis-[120px] grow-0 shrink-0 w-[90%] lg:w-[80%]">
 						<Textarea
 							placeholder={
 								selectedDocumentIds.length === 0 && !documentsQuery.isFetching
@@ -319,7 +325,7 @@ export default function NewChatWindow({
 									: "What do you want to know?"
 							}
 							className={clsx(
-								"text-lg! mt-1 p-4 w-full h-[100px] border rounded-lg",
+								"text-lg! p-4 w-full h-[100px] border rounded-lg",
 								{
 									"disabled:opacity-100 placeholder:text-red-500":
 										selectedDocumentIds.length === 0 &&
@@ -338,27 +344,23 @@ export default function NewChatWindow({
 								getAnswerMutation.isPending
 							}
 						/>
+						<p className="w-full mt-1 text-gray-500 text-end text-sm">
+							{selectedDocumentIds.length} documents
+						</p>
 					</div>
 				</div>
 			) : (
 				<div className="basis-[120px] w-[calc(100%-96px)] grow-0 shrink-0 mx-auto">
-					<p className="text-gray-500 text-end text-sm">
-						{selectedDocumentIds.length} documents
-					</p>
-
 					<Textarea
 						placeholder={
 							selectedDocumentIds.length === 0 && !documentsQuery.isFetching
 								? "Select documents to ask questions"
 								: "What do you want to know?"
 						}
-						className={clsx(
-							"text-lg! mt-1 p-4 w-full h-[100px] mb-8 border rounded-lg",
-							{
-								"disabled:opacity-100 placeholder:text-red-500":
-									selectedDocumentIds.length === 0 && !documentsQuery.isPending,
-							},
-						)}
+						className={clsx("text-lg! p-4 w-full h-[100px] border rounded-lg", {
+							"disabled:opacity-100 placeholder:text-red-500":
+								selectedDocumentIds.length === 0 && !documentsQuery.isPending,
+						})}
 						onKeyUp={(e) => {
 							if (e.key === "Enter") {
 								getAnswer(e.currentTarget.value);
@@ -370,6 +372,9 @@ export default function NewChatWindow({
 							getAnswerMutation.isPending
 						}
 					/>
+					<p className="w-full mt-1 mb-8 text-gray-500 text-end text-sm">
+						{selectedDocumentIds.length} documents
+					</p>
 				</div>
 			)}
 
