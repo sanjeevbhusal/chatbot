@@ -9,7 +9,7 @@ export default async function Page() {
 	});
 
 	if (!session) {
-		redirect("/sign-in");
+		redirect("/");
 	}
 
 	return <Chat />;
