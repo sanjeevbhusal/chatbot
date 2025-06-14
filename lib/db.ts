@@ -1,9 +1,8 @@
-import { documentsChunkTable } from "@/drizzle/schema";
 import "dotenv/config";
 import { drizzle } from "drizzle-orm/libsql";
-import { chatModel, embeddings } from "@/app/api/utils";
-import { sql } from "drizzle-orm/sql";
+import { embeddings } from "@/app/api/utils";
 import { createClient } from "@libsql/client";
+import { writeFileSync } from "node:fs";
 
 if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
 	throw new Error("Missing environment variables");
@@ -64,25 +63,26 @@ async function main() {
 
 	const question = "What is my and my father's name? ";
 	const questionEmbeddings = await embeddings.embedQuery(question);
-	const topK = await db
-		.select({
-			id: sql`documents_chunk.id`,
-			content: sql`content`,
-		})
-		.from(
-			sql`vector_top_k('vector_index', vector32(${JSON.stringify(questionEmbeddings)}), 3)`,
-		)
-		.leftJoin(
-			documentsChunkTable,
-			sql`${documentsChunkTable}.id = vector_top_k.id`,
-		);
+	writeFileSync("./vector.txt", JSON.stringify(questionEmbeddings), "utf-8");
+	// const topK = await db
+	// 	.select({
+	// 		id: sql`documents_chunk.id`,
+	// 		content: sql`content`,
+	// 	})
+	// 	.from(
+	// 		sql`vector_top_k('vector_index', vector32(${JSON.stringify(questionEmbeddings)}), 3)`,
+	// 	)
+	// 	.leftJoin(
+	// 		documentsChunkTable,
+	// 		sql`${documentsChunkTable}.id = vector_top_k.id`,
+	// 	);
 
-	const sources = topK.map((doc) => doc.content).join("\n");
-	const userMessage = {
-		role: "user",
-		content: `${question}\n Sources: ${sources}`,
-	};
-	const response = await chatModel.invoke([userMessage]);
+	// const sources = topK.map((doc) => doc.content).join("\n");
+	// const userMessage = {
+	// 	role: "user",
+	// 	content: `${question}\n Sources: ${sources}`,
+	// };
+	// const response = await chatModel.invoke([userMessage]);
 }
 
 main();

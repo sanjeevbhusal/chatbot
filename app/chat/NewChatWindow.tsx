@@ -65,7 +65,11 @@ export default function NewChatWindow({
 		mutationFn: async (question: string) => {
 			const response = await fetch("/api/answer", {
 				method: "POST",
-				body: JSON.stringify({ question, threadId: activeThreadId }),
+				body: JSON.stringify({
+					question,
+					threadId: activeThreadId,
+					selectedDocumentIds: selectedDocumentIds,
+				}),
 				headers: {
 					"Content-Type": "application/json",
 				},

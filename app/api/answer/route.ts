@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
 	if (!threadId) {
 		return Response.json({ error: "Thread Id is required" });
 	}
+
 	const messages = await db
 		.select()
 		.from(usersMessagesTable)
@@ -107,27 +108,18 @@ export async function POST(request: NextRequest) {
 
 	const body = await request.json();
 	const question = body.question as string;
+	const selectedDocumentIds = body.selectedDocumentIds as number[];
 	let threadId = body.threadId as number | undefined;
 
 	if (!question) {
 		return new Response("Question not provided", { status: 400 });
 	}
 
-	if (!threadId) {
-		const query = await db
-			.insert(messageThreadTable)
-			.values({
-				name: question,
-				userId: userId,
-			})
-			.returning({
-				id: messageThreadTable.id,
-			});
-		threadId = query[0].id;
-	}
-
 	const questionEmbeddings = await embeddings.embedQuery(question);
-	const documentsChunks = await db
+
+	// This approach (using index) isn't perfect if you want to search only in some specific documents. the index returns 3 best match document chunks. But those document chunks could be those the user doesn't want to search in.
+	// The alternative solution is to first filter the documents and then do a vector search on the filtered documents.This solution is more precise but slower as index cannot be used. Read more: https://turso.tech/blog/filtering-in-vector-search-with-metadata-and-rag-pipelines
+	let documentsChunks = await db
 		.select({
 			id: sql<number>`documents_chunk.id`,
 			content: sql<string>`content`,
@@ -147,6 +139,23 @@ export async function POST(request: NextRequest) {
 		return Response.json({ error: "No sources found" }, { status: 400 });
 	}
 
+	documentsChunks = documentsChunks.filter((c) =>
+		selectedDocumentIds.includes(c.userDocumentId),
+	);
+
+	if (!threadId) {
+		const query = await db
+			.insert(messageThreadTable)
+			.values({
+				name: question,
+				userId: userId,
+			})
+			.returning({
+				id: messageThreadTable.id,
+			});
+		threadId = query[0].id;
+	}
+
 	// add this user asked message to database.
 	await db.insert(usersMessagesTable).values({
 		userId: userId,
@@ -163,6 +172,7 @@ export async function POST(request: NextRequest) {
 			content: usersMessagesTable.content,
 		})
 		.from(usersMessagesTable)
+		.where(eq(usersMessagesTable.threadId, threadId))
 		.orderBy(usersMessagesTable.createdAt);
 
 	// change the last message by also adding sources.
@@ -192,12 +202,14 @@ export async function POST(request: NextRequest) {
 	const message = query[0];
 
 	// add sources to database.
-	await db.insert(messageSourcesTable).values(
-		documentsChunks.map((chunk) => ({
-			messageId: message.id,
-			documentChunkId: chunk.id as number,
-		})),
-	);
+	if (documentsChunks.length > 0) {
+		await db.insert(messageSourcesTable).values(
+			documentsChunks.map((chunk) => ({
+				messageId: message.id,
+				documentChunkId: chunk.id as number,
+			})),
+		);
+	}
 
 	const result = {
 		id: message.id,
