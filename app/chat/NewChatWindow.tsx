@@ -30,12 +30,14 @@ interface ChatWindowProps {
 	) => void;
 	activeThreadId: number | null;
 	setActiveThreadId: (threadId: number | null) => void;
+	selectedDocumentIds: number[];
 }
 
 export default function NewChatWindow({
 	onSelectDocument,
 	activeThreadId,
 	setActiveThreadId,
+	selectedDocumentIds,
 }: ChatWindowProps) {
 	const sidebar = useSidebar();
 
@@ -309,28 +311,54 @@ export default function NewChatWindow({
 						Ask any questions against the documents uploaded
 					</div>
 					<Textarea
-						placeholder="What do you want to know?"
-						className="text-lg! p-4 mx-4 basis-[100px] grow-0 shrink-0 border rounded-lg w-[70%]"
+						placeholder={
+							selectedDocumentIds.length === 0 && !documentsQuery.isFetching
+								? "Select documents to ask questions"
+								: "What do you want to know?"
+						}
+						className={clsx(
+							"text-lg! p-4 mx-4 basis-[100px] grow-0 shrink-0 border rounded-lg w-[70%]",
+							{
+								"disabled:opacity-100 placeholder:text-red-500":
+									selectedDocumentIds.length === 0 && !documentsQuery.isPending,
+							},
+						)}
 						onKeyUp={(e) => {
 							if (e.key === "Enter") {
 								getAnswer(e.currentTarget.value);
 								e.currentTarget.value = "";
 							}
 						}}
-						disabled={getAnswerMutation.isPending}
+						disabled={
+							(selectedDocumentIds.length === 0 && !documentsQuery.isPending) ||
+							getAnswerMutation.isPending
+						}
 					/>
 				</div>
 			) : (
 				<Textarea
-					placeholder="Ask any question"
-					className="text-lg! mb-8 basis-[100px] grow-0 shrink-0 border rounded-lg w-[calc(100%-96px)] mx-auto"
+					placeholder={
+						selectedDocumentIds.length === 0 && !documentsQuery.isFetching
+							? "Select documents to ask questions"
+							: "What do you want to know?"
+					}
+					className={clsx(
+						"text-lg! mb-8 basis-[100px] grow-0 shrink-0 border rounded-lg w-[calc(100%-96px)] mx-auto",
+						{
+							"disabled:opacity-100 placeholder:text-red-500":
+								selectedDocumentIds.length === 0 && !documentsQuery.isPending,
+						},
+					)}
 					onKeyUp={(e) => {
 						if (e.key === "Enter") {
 							getAnswer(e.currentTarget.value);
 							e.currentTarget.value = "";
 						}
 					}}
-					disabled={getAnswerMutation.isPending}
+					disabled={
+						(selectedDocumentIds.length === 0 && !documentsQuery.isPending) ||
+						getAnswerMutation.isPending
+					}
 				/>
 			)}
 

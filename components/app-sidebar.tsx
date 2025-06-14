@@ -19,12 +19,16 @@ interface AppSidebarProps {
 	activeThread?: Thread;
 	setActiveDocument: (document?: Document) => void;
 	setActiveThreadId: (threadId: number | null) => void;
+	selectedDocumentIds: number[];
+	setSelectedDocumentIds: (documentIds: number[]) => void;
 }
 
 export function AppSidebar({
 	activeThread,
 	setActiveDocument,
 	setActiveThreadId,
+	selectedDocumentIds,
+	setSelectedDocumentIds,
 }: AppSidebarProps) {
 	const [isUploadFileModalOpen, setIsUploadFileModalOpen] = useState(false);
 
@@ -52,7 +56,7 @@ export function AppSidebar({
 								className="cursor-pointer"
 								onClick={() => setIsUploadFileModalOpen(true)}
 							>
-								<Plus /> New Source
+								<Plus /> New Document
 							</SidebarMenuButton>
 						</SidebarMenuItem>
 					</SidebarMenu>
@@ -62,6 +66,8 @@ export function AppSidebar({
 					setActiveDocument={setActiveDocument}
 					activeThreadId={activeThread?.id}
 					setActiveThreadId={setActiveThreadId}
+					selectedDocumentIds={selectedDocumentIds}
+					setSelectedDocumentIds={setSelectedDocumentIds}
 				/>
 			</Sidebar>
 

@@ -14,6 +14,7 @@ export default function Chat() {
 		useState<number>();
 	const [activeDocumentToLineNo, setActiveDocumentToLineNo] =
 		useState<number>();
+	const [selectedDocumentIds, setSelectedDocumentIds] = useState<number[]>([]);
 
 	const [activeChatId, setActiveChatId] = useQueryState(
 		"activeChatId",
@@ -39,6 +40,8 @@ export default function Chat() {
 				activeThread={activeThread}
 				setActiveDocument={setActiveDocument}
 				setActiveThreadId={setActiveChatId}
+				selectedDocumentIds={selectedDocumentIds}
+				setSelectedDocumentIds={setSelectedDocumentIds}
 			/>
 
 			<div className="flex-grow h-full relative flex flex-col gap-12">
@@ -54,6 +57,7 @@ export default function Chat() {
 					}}
 					activeThreadId={activeChatId}
 					setActiveThreadId={setActiveChatId}
+					selectedDocumentIds={selectedDocumentIds}
 				/>
 			</div>
 

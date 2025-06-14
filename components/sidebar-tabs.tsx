@@ -5,7 +5,9 @@ import type { Document, Thread } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+	AlertCircleIcon,
 	Ellipsis,
+	EllipsisVertical,
 	Eye,
 	File,
 	Loader2,
@@ -16,6 +18,7 @@ import {
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
+import { Alert, AlertTitle } from "./ui/alert";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -46,6 +49,8 @@ import { Input } from "./ui/input";
 import {
 	SidebarContent,
 	SidebarGroup,
+	SidebarGroupAction,
+	SidebarGroupLabel,
 	SidebarMenu,
 	SidebarMenuAction,
 	SidebarMenuButton,
@@ -57,12 +62,16 @@ interface SidebarTabsProps {
 	activeThreadId?: number;
 	setActiveThreadId: (threadId: number | null) => void;
 	setActiveDocument: (document?: Document) => void;
+	selectedDocumentIds: number[];
+	setSelectedDocumentIds: (documentIds: number[]) => void;
 }
 
 export default function SidebarTabs({
 	setActiveDocument,
 	setActiveThreadId,
 	activeThreadId,
+	selectedDocumentIds,
+	setSelectedDocumentIds,
 }: SidebarTabsProps) {
 	const [selectedThreadForRenaming, setSelectedThreadForRenaming] = useState<
 		Thread | undefined
@@ -168,16 +177,22 @@ export default function SidebarTabs({
 		}
 	}, [selectedThreadForRenaming, form]);
 
+	useEffect(() => {
+		if (documentsQuery.data) {
+			setSelectedDocumentIds(documentsQuery.data.map((d) => d.id));
+		}
+	}, [documentsQuery.data, setSelectedDocumentIds]);
+
 	const documents = documentsQuery.data ?? [];
 	const threads = useGetThreadsQuery?.data ?? [];
 
 	return (
 		<>
-			<Tabs defaultValue="chats" className="flex min-h-0 flex-1">
+			<Tabs defaultValue="documents" className="flex min-h-0 flex-1">
 				<SidebarGroup>
 					<TabsList className="w-full">
+						<TabsTrigger value="documents">Documents</TabsTrigger>
 						<TabsTrigger value="chats">Chats</TabsTrigger>
-						<TabsTrigger value="sources">Sources</TabsTrigger>
 					</TabsList>
 				</SidebarGroup>
 
@@ -237,7 +252,33 @@ export default function SidebarTabs({
 							</SidebarMenu>
 						</TabsContent>
 
-						<TabsContent value="sources" className="flex flex-col gap-2">
+						<TabsContent value="documents" className="flex flex-col gap-2">
+							<SidebarGroupLabel>Select all documents</SidebarGroupLabel>
+							<SidebarGroupAction asChild>
+								<Input
+									type="checkbox"
+									className="p-0 h-4 w-4 cursor-pointer top-[1rem]"
+									checked={
+										!documentsQuery.isPending &&
+										selectedDocumentIds.length === documents.length
+									}
+									onClick={() => {
+										if (selectedDocumentIds.length === documents.length) {
+											setSelectedDocumentIds([]);
+										} else {
+											setSelectedDocumentIds(documents.map((d) => d.id));
+										}
+									}}
+								/>
+							</SidebarGroupAction>
+							{!documentsQuery.isPending &&
+								selectedDocumentIds.length === 0 && (
+									<Alert variant="destructive">
+										<AlertCircleIcon />
+										<AlertTitle>No Documents Selected</AlertTitle>
+									</Alert>
+								)}
+
 							<SidebarMenu>
 								{documents.length === 0 ? (
 									<p className=" text-slate-600">No Sources Uploaded</p>
@@ -254,8 +295,11 @@ export default function SidebarTabs({
 
 											<DropdownMenu>
 												<DropdownMenuTrigger asChild>
-													<SidebarMenuAction showOnHover>
-														<Ellipsis />
+													<SidebarMenuAction
+														showOnHover
+														className="right-[40px]"
+													>
+														<EllipsisVertical />
 													</SidebarMenuAction>
 												</DropdownMenuTrigger>
 												<DropdownMenuContent side="right" align="start">
@@ -280,6 +324,33 @@ export default function SidebarTabs({
 													</DropdownMenuItem>
 												</DropdownMenuContent>
 											</DropdownMenu>
+
+											<SidebarMenuAction
+												asChild
+												onClick={(e) => {
+													e.stopPropagation();
+												}}
+											>
+												<Input
+													type="checkbox"
+													className="p-0 h-4 w-4 cursor-pointer"
+													checked={selectedDocumentIds.includes(document.id)}
+													onClick={(e) => {
+														if (selectedDocumentIds.includes(document.id)) {
+															setSelectedDocumentIds(
+																selectedDocumentIds.filter(
+																	(id) => id !== document.id,
+																),
+															);
+														} else {
+															setSelectedDocumentIds([
+																...selectedDocumentIds,
+																document.id,
+															]);
+														}
+													}}
+												/>
+											</SidebarMenuAction>
 										</SidebarMenuItem>
 									))
 								)}
