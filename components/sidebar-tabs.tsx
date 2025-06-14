@@ -55,8 +55,10 @@ import {
 	SidebarMenuAction,
 	SidebarMenuButton,
 	SidebarMenuItem,
+	useSidebar,
 } from "./ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface SidebarTabsProps {
 	activeThreadId?: number;
@@ -81,6 +83,7 @@ export default function SidebarTabs({
 	>(undefined);
 	const [selectedDocumentForDeletion, setSelectedDocumentForDeletion] =
 		useState<Document | undefined>(undefined);
+	const sidebarState = useSidebar();
 
 	const formSchema = z.object({
 		name: z.string().min(1).max(50),
@@ -190,7 +193,7 @@ export default function SidebarTabs({
 		<>
 			<Tabs defaultValue="documents" className="flex min-h-0 flex-1">
 				<SidebarGroup>
-					<TabsList className="w-full">
+					<TabsList className="w-full" hidden={!sidebarState.open}>
 						<TabsTrigger value="documents">Documents</TabsTrigger>
 						<TabsTrigger value="chats">Chats</TabsTrigger>
 					</TabsList>
@@ -262,7 +265,7 @@ export default function SidebarTabs({
 										!documentsQuery.isPending &&
 										selectedDocumentIds.length === documents.length
 									}
-									onClick={() => {
+									onChange={() => {
 										if (selectedDocumentIds.length === documents.length) {
 											setSelectedDocumentIds([]);
 										} else {
@@ -288,10 +291,17 @@ export default function SidebarTabs({
 											key={document.id}
 											onClick={() => setActiveDocument(document)}
 										>
-											<SidebarMenuButton className="cursor-pointer">
-												<File />
-												<span>{document.name}</span>
-											</SidebarMenuButton>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<SidebarMenuButton className="cursor-pointer">
+														<File />
+														<span>{document.name}</span>
+													</SidebarMenuButton>
+												</TooltipTrigger>
+												<TooltipContent hidden={sidebarState.open} side="right">
+													<span>{document.name}</span>
+												</TooltipContent>
+											</Tooltip>
 
 											<DropdownMenu>
 												<DropdownMenuTrigger asChild>
@@ -335,7 +345,7 @@ export default function SidebarTabs({
 													type="checkbox"
 													className="p-0 h-4 w-4 cursor-pointer"
 													checked={selectedDocumentIds.includes(document.id)}
-													onClick={(e) => {
+													onChange={(e) => {
 														if (selectedDocumentIds.includes(document.id)) {
 															setSelectedDocumentIds(
 																selectedDocumentIds.filter(

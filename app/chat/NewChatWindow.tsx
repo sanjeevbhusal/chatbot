@@ -168,50 +168,44 @@ export default function NewChatWindow({
 
 	return (
 		<div className="h-full flex flex-col">
-			<div className="basis-[50px] grow-0 shrink-0 border-b px-4 py-2 flex justify-between items-center bg-white">
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<SidebarTrigger />
-					</TooltipTrigger>
-					<TooltipContent>
-						<span>Toggle Sidebar</span>
-					</TooltipContent>
-				</Tooltip>
+			<div
+				className={clsx(
+					"basis-[50px] grow-0 shrink-0 border-b px-4 py-2 flex justify-between items-center bg-white",
+					{
+						"justify-end": sidebar.open,
+					},
+				)}
+			>
 				{!sidebar.open && (
 					<div className="h-10 w-32 relative">
 						<Image src="/logo.svg" alt="logo" fill />
 					</div>
 				)}
-				<div>
-					{" "}
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild className="w-fit ml-auto">
-							<Avatar className="cursor-pointer">
-								<AvatarImage
-									src={session?.user.image ?? ""}
-									className="h-8 w-8 rounded-full"
-									alt={session?.user.name ?? ""}
-								/>
-								<AvatarFallback className="h-8 w-8">
-									{renderAvatarName(session?.user.name ?? "")}
-								</AvatarFallback>
-							</Avatar>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent side="bottom" align="end">
-							<DropdownMenuItem
-								onClick={(e) => {
-									e.preventDefault();
-									logoutMutation.mutate();
-								}}
-							>
-								Logout{" "}
-								{logoutMutation.isPending && (
-									<Loader2 className="animate-spin" />
-								)}
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
-				</div>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild className="w-fit ml-auto">
+						<Avatar className="cursor-pointer">
+							<AvatarImage
+								src={session?.user.image ?? ""}
+								className="h-8 w-8 rounded-full"
+								alt={session?.user.name ?? ""}
+							/>
+							<AvatarFallback className="h-8 w-8">
+								{renderAvatarName(session?.user.name ?? "")}
+							</AvatarFallback>
+						</Avatar>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent side="bottom" align="end">
+						<DropdownMenuItem
+							onClick={(e) => {
+								e.preventDefault();
+								logoutMutation.mutate();
+							}}
+						>
+							Logout{" "}
+							{logoutMutation.isPending && <Loader2 className="animate-spin" />}
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</div>
 
 			<div

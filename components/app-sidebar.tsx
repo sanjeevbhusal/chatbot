@@ -7,6 +7,8 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
+	SidebarTrigger,
+	useSidebar,
 } from "@/components/ui/sidebar";
 import type { Thread } from "@/lib/types";
 import type { Document } from "@/lib/types";
@@ -14,6 +16,7 @@ import { Plus } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import SidebarTabs from "./sidebar-tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface AppSidebarProps {
 	activeThread?: Thread;
@@ -31,33 +34,58 @@ export function AppSidebar({
 	setSelectedDocumentIds,
 }: AppSidebarProps) {
 	const [isUploadFileModalOpen, setIsUploadFileModalOpen] = useState(false);
+	const sidebarState = useSidebar();
 
 	return (
 		<div>
-			<Sidebar>
+			<Sidebar collapsible="icon">
 				<SidebarHeader>
-					<div className="h-12 w-40 relative">
-						<Image src="/logo.svg" alt="logo" fill />
+					<div className="flex items-center justify-between">
+						<div className="h-12 w-40 relative">
+							<Image src="/logo.svg" alt="logo" fill />
+						</div>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<SidebarTrigger />
+							</TooltipTrigger>
+							<TooltipContent side={sidebarState.open ? "bottom" : "right"}>
+								<span>Toggle Sidebar</span>
+							</TooltipContent>
+						</Tooltip>
 					</div>
 
 					<SidebarMenu className="mt-2">
 						<SidebarMenuItem>
-							<SidebarMenuButton
-								className="cursor-pointer"
-								onClick={() => {
-									setActiveThreadId(null);
-								}}
-							>
-								<Plus /> New Chat
-							</SidebarMenuButton>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<SidebarMenuButton
+										className="cursor-pointer"
+										onClick={() => {
+											setActiveThreadId(null);
+										}}
+									>
+										<Plus /> New Chat
+									</SidebarMenuButton>
+								</TooltipTrigger>
+								<TooltipContent hidden={sidebarState.open} side="right">
+									New Chat
+								</TooltipContent>
+							</Tooltip>
 						</SidebarMenuItem>
 						<SidebarMenuItem>
-							<SidebarMenuButton
-								className="cursor-pointer"
-								onClick={() => setIsUploadFileModalOpen(true)}
-							>
-								<Plus /> New Document
-							</SidebarMenuButton>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<SidebarMenuButton
+										className="cursor-pointer"
+										onClick={() => setIsUploadFileModalOpen(true)}
+									>
+										<Plus /> New Document
+									</SidebarMenuButton>
+								</TooltipTrigger>
+								<TooltipContent hidden={sidebarState.open} side="right">
+									New Document
+								</TooltipContent>
+							</Tooltip>
 						</SidebarMenuItem>
 					</SidebarMenu>
 				</SidebarHeader>
