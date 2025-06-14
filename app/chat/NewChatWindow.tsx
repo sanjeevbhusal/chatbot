@@ -91,7 +91,7 @@ export default function NewChatWindow({
 		mutationFn: async () => {
 			await authClient.signOut({
 				fetchOptions: {
-					onSuccess: () => router.push("/sign-in"),
+					onSuccess: () => router.push("/"),
 				},
 			});
 		},
