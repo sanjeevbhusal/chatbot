@@ -314,6 +314,44 @@ export default function NewChatWindow({
 					<div className="text-2xl">
 						Ask any questions against the documents uploaded
 					</div>
+					<div className="basis-[120px] grow-0 shrink-0 w-[70%]">
+						<p className="w-full text-gray-500 text-end text-sm">
+							{selectedDocumentIds.length} documents
+						</p>
+						<Textarea
+							placeholder={
+								selectedDocumentIds.length === 0 && !documentsQuery.isFetching
+									? "Select documents to ask questions"
+									: "What do you want to know?"
+							}
+							className={clsx(
+								"text-lg! mt-1 p-4 w-full h-[100px] border rounded-lg",
+								{
+									"disabled:opacity-100 placeholder:text-red-500":
+										selectedDocumentIds.length === 0 &&
+										!documentsQuery.isPending,
+								},
+							)}
+							onKeyUp={(e) => {
+								if (e.key === "Enter") {
+									getAnswer(e.currentTarget.value);
+									e.currentTarget.value = "";
+								}
+							}}
+							disabled={
+								(selectedDocumentIds.length === 0 &&
+									!documentsQuery.isPending) ||
+								getAnswerMutation.isPending
+							}
+						/>
+					</div>
+				</div>
+			) : (
+				<div className="basis-[120px] w-[calc(100%-96px)] grow-0 shrink-0 mx-auto">
+					<p className="text-gray-500 text-end text-sm">
+						{selectedDocumentIds.length} documents
+					</p>
+
 					<Textarea
 						placeholder={
 							selectedDocumentIds.length === 0 && !documentsQuery.isFetching
@@ -321,7 +359,7 @@ export default function NewChatWindow({
 								: "What do you want to know?"
 						}
 						className={clsx(
-							"text-lg! p-4 mx-4 basis-[100px] grow-0 shrink-0 border rounded-lg w-[70%]",
+							"text-lg! mt-1 p-4 w-full h-[100px] mb-8 border rounded-lg",
 							{
 								"disabled:opacity-100 placeholder:text-red-500":
 									selectedDocumentIds.length === 0 && !documentsQuery.isPending,
@@ -339,31 +377,6 @@ export default function NewChatWindow({
 						}
 					/>
 				</div>
-			) : (
-				<Textarea
-					placeholder={
-						selectedDocumentIds.length === 0 && !documentsQuery.isFetching
-							? "Select documents to ask questions"
-							: "What do you want to know?"
-					}
-					className={clsx(
-						"text-lg! mb-8 basis-[100px] grow-0 shrink-0 border rounded-lg w-[calc(100%-96px)] mx-auto",
-						{
-							"disabled:opacity-100 placeholder:text-red-500":
-								selectedDocumentIds.length === 0 && !documentsQuery.isPending,
-						},
-					)}
-					onKeyUp={(e) => {
-						if (e.key === "Enter") {
-							getAnswer(e.currentTarget.value);
-							e.currentTarget.value = "";
-						}
-					}}
-					disabled={
-						(selectedDocumentIds.length === 0 && !documentsQuery.isPending) ||
-						getAnswerMutation.isPending
-					}
-				/>
 			)}
 
 			<UploadFileModal
