@@ -9,11 +9,11 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import type { Thread } from "@/lib/types";
+import type { Document } from "@/lib/types";
 import { Plus } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 import SidebarTabs from "./sidebar-tabs";
-
-import type { Document } from "@/lib/types";
 
 interface AppSidebarProps {
 	activeThread?: Thread;
@@ -32,7 +32,11 @@ export function AppSidebar({
 		<div>
 			<Sidebar>
 				<SidebarHeader>
-					<SidebarMenu>
+					<div className="h-12 w-40 relative">
+						<Image src="/logo.svg" alt="logo" fill />
+					</div>
+
+					<SidebarMenu className="mt-2">
 						<SidebarMenuItem>
 							<SidebarMenuButton
 								className="cursor-pointer"

@@ -9,7 +9,7 @@ export default function LandingPage() {
 			<nav className="fixed left-0 right-0 bg-white">
 				<div className="px-6 py-4 flex items-center justify-between">
 					<div className="h-12 w-40 relative">
-						<Image src="/logo.png" alt="logo" fill />
+						<Image src="/logo.svg" alt="logo" fill />
 					</div>
 					<Button variant="outline" className="cursor-pointer" asChild>
 						<Link href="/sign-in">Sign In</Link>

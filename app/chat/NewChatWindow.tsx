@@ -7,7 +7,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip } from "@/components/ui/tooltip";
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -17,6 +17,7 @@ import type { Document, Message } from "@/lib/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
 import { Loader2 } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import UploadFileModal from "./UploadFileModal";
@@ -36,6 +37,8 @@ export default function NewChatWindow({
 	activeThreadId,
 	setActiveThreadId,
 }: ChatWindowProps) {
+	const sidebar = useSidebar();
+
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [isNoDocumentExistsModalOpen, setIsNoDocumentExistsModalOpen] =
 		useState(false);
@@ -160,18 +163,19 @@ export default function NewChatWindow({
 	return (
 		<div className="h-full flex flex-col">
 			<div className="basis-[50px] grow-0 shrink-0 border-b px-4 py-2 flex justify-between items-center bg-white">
-				<div className="flex items-center gap-2">
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<SidebarTrigger />
-						</TooltipTrigger>
-						<TooltipContent>
-							<span>Toggle Sidebar</span>
-						</TooltipContent>
-					</Tooltip>
-
-					<span className="font-medium">ChatBot</span>
-				</div>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<SidebarTrigger />
+					</TooltipTrigger>
+					<TooltipContent>
+						<span>Toggle Sidebar</span>
+					</TooltipContent>
+				</Tooltip>
+				{!sidebar.open && (
+					<div className="h-10 w-32 relative">
+						<Image src="/logo.svg" alt="logo" fill />
+					</div>
+				)}
 				<div>
 					{" "}
 					<DropdownMenu>
