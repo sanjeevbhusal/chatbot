@@ -166,7 +166,9 @@ export default function UploadFileModal({
 
 				<Alert>
 					<AlertCircleIcon />
-					<AlertTitle>Uploading a document can take some time.</AlertTitle>
+					<AlertTitle className="block">
+						Uploading a document can take some time.
+					</AlertTitle>
 				</Alert>
 
 				<DialogFooter>
