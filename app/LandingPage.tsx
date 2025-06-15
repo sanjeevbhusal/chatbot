@@ -17,12 +17,12 @@ export default function LandingPage() {
 				</div>
 				<Separator />
 			</nav>
-			<main className="h-[600px] flex flex-col gap-6 items-center justify-center">
-				<h1 className="text-6xl font-bold w-[800px] text-center">
+			<main className="mt-[120px] md:mt-[160px] px-6 max-w-[800px] mx-auto flex flex-col gap-6 items-center">
+				<h1 className="text-6xl font-bold text-center">
 					{" "}
 					Ask questions against your documents.
 				</h1>
-				<p className="text-gray-600 text-xl w-[600px] text-center">
+				<p className="text-gray-600 text-xl text-center">
 					Get answer to all your queries without having to read the document
 					every time. The answer even includes the document sources.
 				</p>
@@ -31,8 +31,8 @@ export default function LandingPage() {
 				</Button>
 			</main>
 
-			<div className="bg-sky-200 h-[800px] rounded-2xl py-24">
-				<div className="h-full w-[80%] mx-auto relative">
+			<div className="bg-sky-200 mt-12 h-[400px] w-full md:h-[800px] rounded-2xl p-6 md:px-24 md:py-24">
+				<div className="relative h-full w-full">
 					<Image
 						src="/app-screenshot.png"
 						alt="logo"
