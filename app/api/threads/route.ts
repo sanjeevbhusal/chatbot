@@ -1,10 +1,10 @@
 import { messageThreadTable } from "@/drizzle/schema";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
-export async function GET(request: Request) {
+export async function GET() {
 	const session = await auth.api.getSession({
 		headers: await headers(),
 	});

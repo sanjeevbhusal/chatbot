@@ -1,6 +1,5 @@
 import { documentsChunkTable, userDocumentsTable } from "@/drizzle/schema";
 import { db } from "@/lib/db";
-import axios from "axios";
 import { Document } from "@langchain/core/documents";
 import cloudinary from "cloudinary";
 import { embeddings, splitDocument } from "../utils";
@@ -12,7 +11,7 @@ cloudinary.v2.config({
 	secure: true,
 });
 
-export async function GET(request: Request) {
+export async function GET() {
 	const documents = await db
 		.select()
 		.from(userDocumentsTable)
@@ -62,7 +61,7 @@ export async function POST(request: Request) {
 		if (!uploadResult) {
 			throw new Error();
 		}
-	} catch (error) {
+	} catch {
 		return Response.json({ error: "Something went wrong" }, { status: 400 });
 	}
 

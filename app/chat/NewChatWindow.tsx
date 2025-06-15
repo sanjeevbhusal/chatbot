@@ -7,7 +7,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
 import {
 	Tooltip,
@@ -42,8 +42,6 @@ export default function NewChatWindow({
 	setActiveThreadId,
 	selectedDocumentIds,
 }: ChatWindowProps) {
-	const sidebar = useSidebar();
-
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [isNoDocumentExistsModalOpen, setIsNoDocumentExistsModalOpen] =
 		useState(false);

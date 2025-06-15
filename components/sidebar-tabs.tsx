@@ -345,7 +345,7 @@ export default function SidebarTabs({
 													type="checkbox"
 													className="p-0 h-4 w-4 cursor-pointer"
 													checked={selectedDocumentIds.includes(document.id)}
-													onChange={(e) => {
+													onChange={() => {
 														if (selectedDocumentIds.includes(document.id)) {
 															setSelectedDocumentIds(
 																selectedDocumentIds.filter(

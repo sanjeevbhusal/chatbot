@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -13,12 +12,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { useGetDocumentsQuery } from "@/lib/queries";
 import type { Document } from "@/lib/types";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
-import clsx from "clsx";
-import { File } from "lucide-react";
 import { useEffect } from "react";
 
 interface DocumentViewerProps {
