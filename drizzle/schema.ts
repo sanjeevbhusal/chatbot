@@ -58,8 +58,7 @@ export const documentsChunkTable = sqliteTable("documents_chunk", {
 	metadata: text(),
 	content: text(),
 	vector: float32Array("vector", { dimensions: 1536 }),
-	// Note: vector column has an index defined. This is a special vector index. Drizzle doesnot support representing the index correctly in the schema. Hence, new users will need to create the index manually by writing sql themselves.
-	// INDEX: CREATE INDEX IF NOT EXISTS vector_index ON documents_chunk(libsql_vector_idx(vector));
+	// Note: vector column has an index defined. This is a special vector index. Drizzle doesnot support representing the index correctly in the schema. We create the index in a custom migration file. see 0009_create-vector-embeddings.sql.
 });
 
 export const usersMessagesTable = sqliteTable("users_messages", {

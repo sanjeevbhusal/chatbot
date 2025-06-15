@@ -53,7 +53,7 @@ The code is not that clean/efficient. You might find some unused functions, mult
 
 ## Local Setup
 
-In order to run this application locally, you first need to have some environment variables set up. There is a example file (.env.example) in the root directory. Clone that file to create a .env file and fill in the values. 
+1) In order to run this application locally, you first need to have some environment variables set up. There is a example file (.env.example) in the root directory. Clone that file to create a .env file and fill in the values. 
 
 - TURSO_DATABASE_URL
   - a database url that connectes to a sqlite instance hosted in turso
@@ -83,23 +83,26 @@ In order to run this application locally, you first need to have some environmen
  - the url that uniquely identifes your project alongside authentication details. Required for document uploads
 
 
-Once you have the environment variables set up, next step is to do your database migrations. You can run the following command to run all the migration files. migration files are prsent in drizzle/ folder. 
+2) Once you have the environment variables set up, next step is to install all the application dependencies. Run the following command. Make sure to include the --legacy-peer-deps flag. 
+
+```bash
+npm install --legacy-peer-deps 
+```
+
+3) Next step is to do your database migrations. You can run the following command to run all the migration files. migration files are prsent in drizzle/ folder. 
 
 ```bash
 npx drizzle-kit migrate
 ```
 
-Once you have done the migrations, you can run the app using the following command:
+4) Once you have done the migrations, you can start the dev server on localhost:3000 by running the following command. 
 
 ```bash
 npm run dev
 ```
-This will start a dev server on localhost:3000. 
 
-If you want a UI to view/edit database, you can  run the following command. 
+5) If you want a UI to view/edit database, you can start the drizzle studio on https://local.drizzle.studio/ by running the following command. 
 
 ```bash
 npx drizzle-kit studio
 ```
-
-This will start a local database GUI on https://local.drizzle.studio/

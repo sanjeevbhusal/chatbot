@@ -10,7 +10,6 @@ import {
 } from "@/drizzle/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { writeFileSync } from "fs";
 
 const systemMessage = {
 	role: "system",
@@ -182,8 +181,6 @@ export async function POST(request: NextRequest) {
 
 	// build messages array to supply to llm. add system Message as the first message
 	const messages = [systemMessage, ...usersMessages.slice(0, -1), lastMessage];
-
-	writeFileSync("./vector.txt", JSON.stringify(messages), "utf-8");
 
 	const response = await chatModel.invoke(messages);
 
