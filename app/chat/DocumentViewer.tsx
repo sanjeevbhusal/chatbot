@@ -6,6 +6,13 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import "@cyntler/react-doc-viewer/dist/index.css";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useGetDocumentsQuery } from "@/lib/queries";
 import type { Document } from "@/lib/types";
@@ -70,31 +77,43 @@ export default function DocumentViewer({
 	return (
 		<Dialog open={!!activeDocument} onOpenChange={onClose}>
 			<DialogContent
-				className="w-[80%] h-[90%] pl-2"
+				className="w-[90%] sm:w-[80%] h-[90%]"
 				style={{ maxWidth: "none" }}
 			>
 				<div className="flex gap-2 h-full">
-					<div className="flex flex-col gap-2 basis-40 shrink-0">
-						{documents.map((document) => (
-							<div className={"flex gap-4 items-center"} key={document.id}>
-								<Button
-									variant="ghost"
-									className={clsx("w-full justify-start cursor-pointer", {
-										"bg-accent": document.id === activeDocument?.id,
-									})}
-									onClick={() => onSelectDocument(document)}
-								>
-									<File />
-									<span>{document.name}</span>
-								</Button>
-							</div>
-						))}
-					</div>
-
-					<Separator orientation="vertical" />
 					<div className="px-4 flex flex-col">
 						<DialogHeader className="pb-4 basis-10 shrink-0">
-							<DialogTitle>{activeDocument?.name}</DialogTitle>
+							<Select
+								value={activeDocument?.id.toString()}
+								onValueChange={(documentId) => {
+									const doc = documents.find(
+										(document) => document.id === Number(documentId),
+									);
+									if (doc) {
+										onSelectDocument(doc);
+									}
+								}}
+							>
+								<SelectTrigger className="w-[180px]">
+									<DialogTitle asChild>
+										<SelectValue />
+									</DialogTitle>
+								</SelectTrigger>
+								<SelectContent>
+									{documents.map((document) => {
+										return (
+											<SelectItem
+												key={document.id}
+												value={document.id.toString()}
+											>
+												{document.name}
+											</SelectItem>
+										);
+									})}
+								</SelectContent>
+							</Select>
+
+							{/* <DialogTitle>{activeDocument?.name}</DialogTitle> */}
 						</DialogHeader>
 						<div className="overflow-scroll basis-10 grow">
 							<DocViewer
