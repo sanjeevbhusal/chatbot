@@ -1,5 +1,7 @@
 The name of this project is AskMyDocs. As the name suggests, its a RAG (Retrieval Augmented Generation) based chatbot application. User can upload documents and ask questions against the documents. The application will use OpenAI model's to generate responses.
 
+Try the hosted version of the application at https://rag-chatbot-olive-nine.vercel.app/
+
 
 ## Application UI
 The major focus was to learn how to build a RAG application. I haven't stressed much about making the UI look the prettiest. However, the UI does look good enough and is responsibe across all devices. 
@@ -106,3 +108,5 @@ npm run dev
 ```bash
 npx drizzle-kit studio
 ```
+
+Try the hosted version of the application at https://rag-chatbot-olive-nine.vercel.app/
