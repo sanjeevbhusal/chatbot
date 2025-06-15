@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+The name of this project is AskMyDocs. As the name suggests, its a RAG (Retrieval Augmented Generation) based chatbot application. User can upload documents and ask questions against the documents. The application will use OpenAI model's to generate responses.
 
-## Getting Started
+## Features
+- Authentication 
+  - User can create account / log in using Google. 
+- Document Upload: 
+  - User can upload documents. The uploaded documents are stored in Cloudinary. 
+- Document View:
+  - User can view the uploaded documents. The documents are rendered in the application itself. 
+- Chat History:
+  - User can create mutliple chat histories. Each chat history resets the conversation.
+- Answer Sources:
+  - Each LLM response comes with the sources the answer was generated from. User can click on the source to view that specific part of the document.
+- Document Filtering:
+  - User can configure which document to search from for each query.
+- Embeddings:
+  - The uploaded documents embeddings are generated using OpenAI's embedding model and are instantly ready to be searchable.
 
-First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Application UI
+The major focus was to learn how to build a RAG application. I haven't stressed much about making the UI look the prettiest. However, the UI does look good enough and is responsibe across all devices. 
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+![Application UI](https://github.com/user-attachments/assets/26439b7d-01f8-4a3d-9a10-af8575d1c30b)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+## Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- LLM Framework: LangChain
+- LLM Provider: OpenAI
+- App Framework: Next.js 15
+- Styling: TailwindCSS with Shadcn UI
+- Database: SQLite/LibSQl hosted on Turso. 
+- ORM:Drizzle ORM 
+- Authentication: BetterAuth
+- Document Storage: Cloudinary
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
