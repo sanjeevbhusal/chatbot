@@ -79,8 +79,17 @@ In order to run this application locally, you first need to have some environmen
 - GOOGLE_CLIENT_SECRET
   - the client secret associated with your google app. required for signin.
 
+- CLOUDINARY_URL
+ - the url that uniquely identifes your project alongside authentication details. Required for document uploads
 
-Once you have the environment variables set up, you can run the app using the following command:
+
+Once you have the environment variables set up, next step is to do your database migrations. You can run the following command to run all the migration files. migration files are prsent in drizzle/ folder. 
+
+```bash
+npx drizzle-kit migrate
+```
+
+Once you have done the migrations, you can run the app using the following command:
 
 ```bash
 npm run dev
