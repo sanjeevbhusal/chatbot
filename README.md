@@ -80,7 +80,7 @@ The code is not that clean/efficient. You might find some unused functions, mult
   - the client secret associated with your google app. required for signin.
 
 - CLOUDINARY_URL
- - the url that uniquely identifes your project alongside authentication details. Required for document uploads
+  - the url that uniquely identifes your project alongside authentication details. Required for document uploads
 
 
 2) Once you have the environment variables set up, next step is to install all the application dependencies. Run the following command. Make sure to include the --legacy-peer-deps flag. 

@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { chatModel, embeddings } from "../utils";
 import { db } from "@/lib/db";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import {
 	documentsChunkTable,
 	messageSourcesTable,
@@ -30,13 +30,18 @@ export async function GET(request: NextRequest) {
 
 	const threadId = Number(request.nextUrl.searchParams.get("threadId"));
 	if (!threadId) {
-		return Response.json({ error: "Thread Id is required" });
+		return Response.json({ error: "Thread Id is required" }, { status: 400 });
 	}
 
 	const messages = await db
 		.select()
 		.from(usersMessagesTable)
-		.where(eq(usersMessagesTable.threadId, threadId))
+		.where(
+			and(
+				eq(usersMessagesTable.threadId, threadId),
+				eq(usersMessagesTable.userId, userId),
+			),
+		)
 		.orderBy(usersMessagesTable.createdAt)
 		.leftJoin(
 			messageSourcesTable,
@@ -109,6 +114,23 @@ export async function POST(request: NextRequest) {
 	const question = body.question as string;
 	const selectedDocumentIds = body.selectedDocumentIds as number[];
 	let threadId = body.threadId as number | undefined;
+
+	if (threadId) {
+		const exists = await db
+			.select({ id: messageThreadTable.id })
+			.from(messageThreadTable)
+			.where(
+				and(
+					eq(messageThreadTable.id, threadId),
+					eq(messageThreadTable.userId, userId),
+				),
+			)
+			.limit(1);
+
+		if (exists.length === 0) {
+			return Response.json({ error: "Invalid threadId" }, { status: 403 });
+		}
+	}
 
 	if (!question) {
 		return new Response("Question not provided", { status: 400 });

@@ -3,6 +3,7 @@ import {
 	integer,
 	text,
 	primaryKey,
+	index,
 } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 import { customType } from "drizzle-orm/sqlite-core";
@@ -23,15 +24,19 @@ export const usersTable = sqliteTable("user", {
 		.notNull(),
 });
 
-export const userDocumentsTable = sqliteTable("user_documents", {
-	id: integer().primaryKey({ autoIncrement: true }).notNull(),
-	userId: text().references(() => usersTable.id),
-	name: text(),
-	url: text(),
-	createdAt: integer("created_at", { mode: "timestamp" })
-		.$defaultFn(() => /* @__PURE__ */ new Date())
-		.notNull(),
-});
+export const userDocumentsTable = sqliteTable(
+	"user_documents",
+	{
+		id: integer().primaryKey({ autoIncrement: true }).notNull(),
+		userId: text().references(() => usersTable.id),
+		name: text(),
+		url: text(),
+		createdAt: integer("created_at", { mode: "timestamp" })
+			.$defaultFn(() => /* @__PURE__ */ new Date())
+			.notNull(),
+	},
+	(table) => [index("user_documents_idx").on(table.userId)],
+);
 
 const float32Array = customType<{
 	data: number[];
@@ -61,33 +66,42 @@ export const documentsChunkTable = sqliteTable("documents_chunk", {
 	// Note: vector column has an index defined. This is a special vector index. Drizzle doesnot support representing the index correctly in the schema. We create the index in a custom migration file. see 0009_create-vector-embeddings.sql.
 });
 
-export const usersMessagesTable = sqliteTable("users_messages", {
-	id: integer().primaryKey({ autoIncrement: true }),
-	userId: text()
-		.references(() => usersTable.id)
-		.notNull(),
-	role: text().notNull(),
-	content: text().notNull(),
-	createdAt: text().notNull(),
-	threadId: integer()
-		.references(() => messageThreadTable.id, {
-			onDelete: "cascade",
-		})
-		.notNull(),
-});
+export const usersMessagesTable = sqliteTable(
+	"users_messages",
+	{
+		id: integer().primaryKey({ autoIncrement: true }),
+		// TODO: probably don't need a user id here.
+		userId: text()
+			.references(() => usersTable.id)
+			.notNull(),
+		role: text().notNull(),
+		content: text().notNull(),
+		createdAt: text().notNull(),
+		threadId: integer()
+			.references(() => messageThreadTable.id, {
+				onDelete: "cascade",
+			})
+			.notNull(),
+	},
+	(table) => [index("thread_messages_idx").on(table.threadId)],
+);
 
-export const messageThreadTable = sqliteTable("message_thread", {
-	id: integer().primaryKey({ autoIncrement: true }),
-	name: text(),
-	userId: text()
-		.references(() => usersTable.id, {
-			onDelete: "cascade",
-		})
-		.notNull(),
-	createdAt: integer("created_at", { mode: "timestamp" })
-		.notNull()
-		.$defaultFn(() => /* @__PURE__ */ new Date()),
-});
+export const messageThreadTable = sqliteTable(
+	"message_thread",
+	{
+		id: integer().primaryKey({ autoIncrement: true }),
+		name: text(),
+		userId: text()
+			.references(() => usersTable.id, {
+				onDelete: "cascade",
+			})
+			.notNull(),
+		createdAt: integer("created_at", { mode: "timestamp" })
+			.notNull()
+			.$defaultFn(() => /* @__PURE__ */ new Date()),
+	},
+	(table) => [index("user_threads_idx").on(table.userId)],
+);
 
 export const messageSourcesTable = sqliteTable(
 	"message_sources",

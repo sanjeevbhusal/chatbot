@@ -3,31 +3,15 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
-import { useMutation } from "@tanstack/react-query";
-import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import GoogleIcon from "./google-icon.svg";
 
 export default function SignIn() {
-	const router = useRouter();
-
-	const createThreadMutation = useMutation({
-		mutationFn: async () => {
-			await fetch("/api/threads", {
-				method: "POST",
-			});
-		},
-		onSuccess: () => {
-			router.push("/chat");
-		},
-	});
-
 	const signin = async () => {
 		await authClient.signIn.social({
 			provider: "google",
+			callbackURL: "/chat",
 		});
-		createThreadMutation.mutate();
 	};
 
 	return (
