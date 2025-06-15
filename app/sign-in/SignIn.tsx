@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,14 +32,23 @@ export default function SignIn() {
 
 	return (
 		<div className="h-screen w-screen flex">
-			<div className="basis-10 grow shrink-0 relative">
+			<div className="basis-10 grow shrink-0 relative bg-black hidden lg:block">
 				<Image
 					src="/login-page.png"
 					alt="logo"
 					fill
-					className="h-full w-full object-cover"
+					className="h-full w-full object-contain"
 				/>
 			</div>
+			<nav className="fixed left-0 right-0 bg-white lg:hidden">
+				<div className="px-6 py-4 flex items-center justify-between">
+					<div className="h-12 w-40 relative">
+						<Image src="/logo.svg" alt="logo" fill />
+					</div>
+				</div>
+				<Separator />
+			</nav>
+
 			<div className="basis-10 grow shrink-0 flex flex-col items-center justify-center">
 				<h1 className="text-2xl font-bold">Welcome to Ask My Docs</h1>
 				<span className="text-gray-500 mt-2">
